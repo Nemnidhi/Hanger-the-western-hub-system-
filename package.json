@@ -1,0 +1,15 @@
+{
+  "name": "hanger-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "The Hanger's own commerce platform: catalogue, stock by location, WhatsApp ordering, COD checks, GST invoices, store billing.",
+  "workspaces": [
+    "server"
+  ],
+  "scripts": {
+    "test": "npm test --workspace server"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
