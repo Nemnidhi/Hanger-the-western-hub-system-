@@ -3,7 +3,7 @@ import { api, can, type Me } from "../api";
 import { phone, rupees, when } from "../format";
 import { useLive } from "../live";
 import { Dialog, Notice, useLoad, useRun } from "../ui";
-import { CHANNEL_LABEL, GST_STATES, PAYMENT_LABEL, STATUS_LABEL, STATUS_TONE, type Invoice, type Order } from "../types";
+import { CHANNEL_LABEL, GST_STATES, PAYMENT_LABEL, STATUS_LABEL, STATUS_TONE, type CourierRate, type Invoice, type Order } from "../types";
 
 // Orders: a list by what needs doing (left) and the open order with its next step (right).
 // Hash routes: #orders/list/<filter> and #orders/<id>.
@@ -49,7 +49,7 @@ export function Orders({ me }: { me: Me }) {
   if (filter !== "all") params.set("status", filter);
   if (search) params.set("q", search);
   const list = useLoad<{ prefix: string; orders: Order[] }>(`/api/orders?${params}`);
-  const detail = useLoad<{ order: Order; invoices: Invoice[] }>(orderId ? `/api/orders/${orderId}` : null);
+  const detail = useLoad<{ order: Order; invoices: Invoice[]; courierReady: boolean }>(orderId ? `/api/orders/${orderId}` : null);
   useLive(
     ["order"],
     (_type, data) => {
@@ -101,15 +101,17 @@ export function Orders({ me }: { me: Me }) {
       <section className="split-detail" aria-label="Order">
         {!orderId && <div className="empty">Pick an order.</div>}
         {orderId && detail.error && <Notice>{detail.error}</Notice>}
-        {orderId && detail.data && <OrderDetail me={me} prefix={prefix} order={detail.data.order} invoices={detail.data.invoices} onChanged={() => (detail.reload(), list.reload())} />}
+        {orderId && detail.data && <OrderDetail me={me} prefix={prefix} order={detail.data.order} invoices={detail.data.invoices} courierReady={detail.data.courierReady} onChanged={() => (detail.reload(), list.reload())} />}
       </section>
     </div>
   );
 }
 
-function OrderDetail({ me, prefix, order, invoices, onChanged }: { me: Me; prefix: string; order: Order; invoices: Invoice[]; onChanged: () => void }) {
+type Ask = null | "cancel" | "ship" | "rto" | "return" | "book" | "cancel-courier";
+
+function OrderDetail({ me, prefix, order, invoices, courierReady, onChanged }: { me: Me; prefix: string; order: Order; invoices: Invoice[]; courierReady: boolean; onChanged: () => void }) {
   const { busy, error, run } = useRun();
-  const [ask, setAsk] = useState<null | "cancel" | "ship" | "rto" | "return">(null);
+  const [ask, setAsk] = useState<Ask>(null);
   const pieces = order.lines.reduce((total, line) => total + line.qty, 0);
   const canWrite = can(me, "orders:write");
   const canFulfil = can(me, "orders:fulfil");
@@ -139,7 +141,7 @@ function OrderDetail({ me, prefix, order, invoices, onChanged }: { me: Me; prefi
       </div>
       <Notice>{error}</Notice>
 
-      <NextStep order={order} busy={busy} canWrite={canWrite} canFulfil={canFulfil} act={act} setAsk={setAsk} />
+      <NextStep order={order} busy={busy} canWrite={canWrite} canFulfil={canFulfil} courierReady={courierReady} act={act} setAsk={setAsk} />
 
       <div className="cards">
         <div className="card">
@@ -226,7 +228,7 @@ function OrderDetail({ me, prefix, order, invoices, onChanged }: { me: Me; prefi
           )}
         </div>
 
-        {(order.shipment.courier || invoices.length > 0) && (
+        {(order.shipment.courier || order.shipment.providerOrderId || invoices.length > 0) && (
           <div className="card">
             <h3>Invoice and shipping</h3>
             {invoices.map((invoice) => (
@@ -239,13 +241,7 @@ function OrderDetail({ me, prefix, order, invoices, onChanged }: { me: Me; prefi
                 </span>
               </p>
             ))}
-            {order.shipment.courier && (
-              <p>
-                {order.shipment.courier} · {order.shipment.awb}
-                <br />
-                <span className="muted small-text">shipped {when(order.shipment.shippedAt)}</span>
-              </p>
-            )}
+            {order.shipment.courier && <Shipment order={order} />}
           </div>
         )}
       </div>
@@ -268,13 +264,31 @@ function OrderDetail({ me, prefix, order, invoices, onChanged }: { me: Me; prefi
       {ask === "return" && <AskDialog title="Mark returned" label="Why did it come back?" placeholder="Too small" busy={busy} onClose={() => setAsk(null)} onSubmit={(reason) => act("return", { reason })} note="The pieces go back into stock and a credit note is made. Refund the customer in Razorpay or by UPI." />}
       {ask === "rto" && <AskDialog title="Came back undelivered (RTO)" label="Note (optional)" placeholder="Customer refused" optional busy={busy} onClose={() => setAsk(null)} onSubmit={(note) => act("rto", { note })} note="Counts against the customer's and the pincode's COD record." />}
       {ask === "ship" && <ShipDialog busy={busy} onClose={() => setAsk(null)} onSubmit={(courier, awb) => act("ship", { courier, awb })} />}
+      {ask === "book" && <BookCourierDialog order={order} onClose={() => setAsk(null)} onBooked={() => (setAsk(null), onChanged())} />}
+      {ask === "cancel-courier" && (
+        <Dialog title="Cancel the courier booking" onClose={() => setAsk(null)}>
+          <p>
+            {order.shipment.courier} · {order.shipment.awb} is cancelled at Shiprocket and the pickup is called off. The order stays packed, ready to book again.
+          </p>
+          <div className="actions">
+            <button type="button" className="btn" onClick={() => setAsk(null)}>
+              Back
+            </button>
+            <button className="btn danger" disabled={busy} onClick={() => act("cancel-courier")}>
+              Cancel booking
+            </button>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }
 
-function NextStep({ order, busy, canWrite, canFulfil, act, setAsk }: { order: Order; busy: boolean; canWrite: boolean; canFulfil: boolean; act: (action: string, body?: Record<string, unknown>) => void; setAsk: (value: "cancel" | "ship" | "rto" | "return") => void }) {
+function NextStep({ order, busy, canWrite, canFulfil, courierReady, act, setAsk }: { order: Order; busy: boolean; canWrite: boolean; canFulfil: boolean; courierReady: boolean; act: (action: string, body?: Record<string, unknown>) => void; setAsk: (value: Ask) => void }) {
   const [stateCode, setStateCode] = useState(order.shipTo?.stateCode || "");
-  const cancel = canWrite && !["shipped", "delivered", "rto", "returned", "cancelled"].includes(order.status) && (
+  const booked = Boolean(order.shipment.providerOrderId);
+  // A booked courier is cancelled first (the server refuses otherwise).
+  const cancel = canWrite && !booked && !["shipped", "delivered", "rto", "returned", "cancelled"].includes(order.status) && (
     <button className="btn danger" disabled={busy} onClick={() => setAsk("cancel")}>
       Cancel order
     </button>
@@ -322,16 +336,59 @@ function NextStep({ order, busy, canWrite, canFulfil, act, setAsk }: { order: Or
       </>
     );
   }
-  if (order.status === "packed") {
-    text = "Book the courier, then add the tracking number. The customer gets it on WhatsApp.";
+  if (order.status === "packed" && booked) {
+    const { shipment } = order;
+    text = shipment.awb
+      ? `Courier booked: ${shipment.courier}, AWB ${shipment.awb}${shipment.pickupNote ? ` (${shipment.pickupNote})` : ""}. Print the label and stick it on the parcel. The order moves to Shipped by itself when the courier collects it.`
+      : "The booking stopped half-way. Book again to finish it.";
     main = canFulfil && (
-      <button className="btn primary" disabled={busy} onClick={() => setAsk("ship")}>
-        Add tracking and ship
-      </button>
+      <>
+        {shipment.awb && shipment.labelUrl && (
+          <a className="btn primary" href={shipment.labelUrl} target="_blank" rel="noreferrer">
+            Print label
+          </a>
+        )}
+        {shipment.awb && !shipment.labelUrl && (
+          <button className="btn primary" disabled={busy} onClick={() => act("courier-label")}>
+            Get label
+          </button>
+        )}
+        {!shipment.awb && (
+          <button className="btn primary" disabled={busy} onClick={() => setAsk("book")}>
+            Book courier
+          </button>
+        )}
+        {shipment.awb && (
+          <button className="btn" disabled={busy} onClick={() => act("ship", { courier: shipment.courier, awb: shipment.awb })} title="Use this if the courier collected it and the tracking has not caught up yet">
+            Handed to courier
+          </button>
+        )}
+        <button className="btn danger" disabled={busy} onClick={() => setAsk("cancel-courier")}>
+          Cancel booking
+        </button>
+      </>
+    );
+  } else if (order.status === "packed") {
+    text = courierReady ? "Book the courier: pick one by price and speed, print the label, and the customer gets the tracking link on WhatsApp." : "Book the courier, then add the tracking number. The customer gets it on WhatsApp.";
+    main = canFulfil && (
+      <>
+        {courierReady && (
+          <button className="btn primary" disabled={busy} onClick={() => setAsk("book")}>
+            Book courier
+          </button>
+        )}
+        <button className={courierReady ? "btn" : "btn primary"} disabled={busy} onClick={() => setAsk("ship")}>
+          {courierReady ? "Add tracking by hand" : "Add tracking and ship"}
+        </button>
+      </>
     );
   }
   if (order.status === "shipped") {
-    text = "On the way.";
+    text = order.shipment.rtoStartedAt
+      ? "The courier is bringing it back (RTO). It is restocked when it arrives."
+      : order.shipment.provider
+        ? `On the way${order.shipment.trackingStatus ? `: ${order.shipment.trackingStatus.toLowerCase()}` : ""}. Delivery and returns are recorded from the courier's tracking.`
+        : "On the way.";
     main = canFulfil && (
       <>
         <button className="btn primary" disabled={busy} onClick={() => act("deliver")}>
@@ -441,6 +498,140 @@ function ShipDialog({ busy, onClose, onSubmit }: { busy: boolean; onClose: () =>
           </button>
         </div>
       </form>
+    </Dialog>
+  );
+}
+
+/** The courier, tracking number, label and the courier's latest scans. */
+function Shipment({ order }: { order: Order }) {
+  const { shipment } = order;
+  const [all, setAll] = useState(false);
+  const events = shipment.events || [];
+  return (
+    <div className="shipment">
+      <p>
+        {shipment.courier} · <strong>{shipment.awb}</strong>
+        {shipment.provider === "shiprocket" && shipment.awb && (
+          <>
+            {" "}
+            <a className="small-text" href={`https://shiprocket.co/tracking/${encodeURIComponent(shipment.awb)}`} target="_blank" rel="noreferrer">
+              tracking page
+            </a>
+          </>
+        )}
+        <br />
+        <span className="muted small-text">
+          {shipment.shippedAt ? `shipped ${when(shipment.shippedAt)}` : shipment.bookedAt ? `booked ${when(shipment.bookedAt)}` : ""}
+          {shipment.chargePaise ? ` · courier charge ${rupees(shipment.chargePaise)}` : ""}
+          {shipment.weightGrams ? ` · ${(shipment.weightGrams / 1000).toFixed(2)} kg` : ""}
+        </span>
+      </p>
+      {shipment.trackingStatus && shipment.provider && (
+        <p className="small-text">
+          Courier says: <strong>{shipment.trackingStatus}</strong>
+          {shipment.trackedAt && <span className="muted"> · {when(shipment.trackedAt)}</span>}
+        </p>
+      )}
+      {shipment.labelUrl && (
+        <p className="small-text">
+          <a href={shipment.labelUrl} target="_blank" rel="noreferrer">
+            Shipping label (PDF)
+          </a>
+        </p>
+      )}
+      {events.length > 0 && (
+        <>
+          <ol className="scans">
+            {(all ? events : events.slice(0, 3)).map((event, index) => (
+              <li key={index}>
+                <span className="muted small-text">{when(event.at)}</span> {event.activity || event.status}
+                {event.location && <span className="muted small-text"> · {event.location}</span>}
+              </li>
+            ))}
+          </ol>
+          {events.length > 3 && (
+            <button type="button" className="btn small" onClick={() => setAll(!all)}>
+              {all ? "Fewer scans" : `All ${events.length} scans`}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Rates from every courier that serves the pincode, for the parcel's weight; book one. */
+function BookCourierDialog({ order, onClose, onBooked }: { order: Order; onClose: () => void; onBooked: () => void }) {
+  const [grams, setGrams] = useState("");
+  const [query, setQuery] = useState("");
+  const rates = useLoad<{ rates: CourierRate[]; weightGrams: number; cod: boolean }>(`/api/orders/${order._id}/courier-rates${query}`);
+  const [chosen, setChosen] = useState<number | null>(null);
+  const { busy, error, run } = useRun();
+  useEffect(() => {
+    if (!rates.data) return;
+    if (!grams) setGrams(String(rates.data.weightGrams));
+    const list = rates.data.rates;
+    if (!list.some((rate) => rate.courierId === chosen)) setChosen((list.find((rate) => rate.recommended) || list[0])?.courierId ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rates.data]);
+  const weightOk = Number(grams) >= 50 && Number(grams) <= 30000;
+  const stale = rates.data && Number(grams) !== rates.data.weightGrams;
+
+  const book = () =>
+    run(async () => {
+      await api(`/api/orders/${order._id}/book-courier`, { method: "POST", body: { courierId: chosen, weightGrams: Number(grams) } });
+      onBooked();
+    });
+
+  return (
+    <Dialog title="Book a courier" onClose={onClose} wide>
+      <form onSubmit={(event) => (event.preventDefault(), weightOk && setQuery(`?weight=${Math.round(Number(grams))}`))} className="inline-form weight-row">
+        <div className="field">
+          <label htmlFor="weight">Parcel weight (grams, with the packing)</label>
+          <input id="weight" className="input" type="number" min={50} max={30000} step={50} value={grams} onChange={(event) => setGrams(event.target.value)} />
+        </div>
+        <button className="btn" disabled={!weightOk || !stale}>
+          Check rates
+        </button>
+      </form>
+      <p className="muted small-text">
+        To {order.shipTo.pincode} · {rates.data?.cod ? `cash on delivery: collect ${rupees(order.totals.totalPaise)}` : "prepaid"}
+      </p>
+      <Notice>{rates.error}</Notice>
+      {!rates.data && !rates.error && <p className="muted">Asking the couriers…</p>}
+      {rates.data && !rates.data.rates.length && <Notice tone="warn">No courier serves this pincode{rates.data.cod ? " for cash on delivery" : ""}. Ask the customer to pay online, or ship it another way and add the tracking by hand.</Notice>}
+      {rates.data && rates.data.rates.length > 0 && (
+        <div className="rates" role="radiogroup" aria-label="Courier">
+          {rates.data.rates.map((rate) => (
+            <label key={rate.courierId} className={`rate ${chosen === rate.courierId ? "chosen" : ""}`}>
+              <input type="radio" name="courier" checked={chosen === rate.courierId} onChange={() => setChosen(rate.courierId)} />
+              <span className="rate-name">
+                {rate.name}
+                {rate.recommended && <span className="badge ok">recommended</span>}
+                <span className="muted small-text">
+                  {rate.days ? `${rate.days} day${rate.days === "1" ? "" : "s"}` : "delivery time not given"}
+                  {rate.rating !== null ? ` · rated ${rate.rating.toFixed(1)}` : ""}
+                  {rate.surface ? " · surface" : " · air"}
+                </span>
+              </span>
+              <span className="rate-price">
+                {rupees(rate.ratePaise)}
+                {rate.codChargePaise > 0 && <span className="muted small-text">incl. COD {rupees(rate.codChargePaise)}</span>}
+              </span>
+            </label>
+          ))}
+        </div>
+      )}
+      <Notice>{error}</Notice>
+      {stale && <Notice tone="warn">The weight changed: check the rates again before booking.</Notice>}
+      <div className="actions">
+        <button type="button" className="btn" onClick={onClose}>
+          Back
+        </button>
+        <button className="btn primary" disabled={busy || !chosen || Boolean(stale) || !rates.data?.rates.length} onClick={book}>
+          {busy ? "Booking…" : "Book and get label"}
+        </button>
+      </div>
     </Dialog>
   );
 }

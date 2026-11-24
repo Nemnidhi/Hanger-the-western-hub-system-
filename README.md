@@ -19,6 +19,12 @@ commerce catalogue) used directly as tech partner. No Shopify. Phase 1: the serv
   CGST + SGST inside Madhya Pradesh, IGST elsewhere (state from the pincode; staff confirm when unsure).
   One series per location per financial year (`IN1/2627/00001`); cancellations after invoicing get a
   credit note. Invoices are never edited.
+- **Courier booking (Shiprocket, the brand's own account)**: for a packed order, rates from every
+  courier that serves the pincode (cheapest first, Shiprocket's pick marked, COD charge included),
+  book one, pickup requested, label PDF to print. Tracking updates (webhook, plus an hourly check in
+  case one is missed) move the order to Shipped, Out for delivery (the customer is told), Delivered
+  (COD counted as paid) or RTO (restocked, credit note). Cancel a booking before pickup and rebook.
+  Without Shiprocket set up, staff type the courier and tracking number by hand.
 - **Store counter sale** (POS API): cash / UPI / card, invoice in the store's own series.
 - **Meta catalogue sync**: stock and price changes reach WhatsApp / Instagram within about 5 minutes.
 - **Staff sign-in**: roles owner / manager / staff / packer; two-step login required for owner and manager.
@@ -32,20 +38,21 @@ React + Vite, served by the API in production (`WEB_DIST_DIR`). Screens by role:
   on the way, carts), last-piece sizes.
 - **Chats**: the shared WhatsApp inbox, with each chat's order.
 - **Orders**: list by what needs doing, search by number / phone / name; the order page shows the next
-  step (confirm COD, set the GST state, print invoice, pack, add tracking, delivered / RTO / returned,
-  cancel), items with GST rate, customer, the COD risk score with its reasons, invoices and history.
+  step (confirm COD, set the GST state, print invoice, pack, book the courier and print the label,
+  delivered / RTO / returned, cancel), the courier's scans, items with GST rate, customer, the COD risk score with its reasons, invoices and history.
 - **Counter**: billing at the store; scan a barcode (or type a size code / name), UPI / cash / card,
   print the invoice.
 - **Catalogue**: styles with photos (uploaded from phone or computer), sizes and stock at each
   location; add / edit, put live, archive, barcodes per size.
 - **Stock**: receive from a supplier by scanning, count with a reason, move between locations, history.
 - **Invoice**: printable GST invoice / credit note (A4 or 80 mm counter printer), amount in words.
-- **Settings** (owner): business and GST details, COD bands, locations, suppliers. Plus Templates,
+- **Settings** (owner): business and GST details, COD bands, shipping (Shiprocket pickup address,
+  usual parcel weight and box), locations, suppliers. Plus Templates,
   Team and My account.
 
 ## Not yet
 
-Website storefront, courier booking and tracking, Instagram DMs, WhatsApp Flows,
+Website storefront, Instagram DMs, WhatsApp Flows,
 reports, the stylist and buying tools (see the plan doc, "Future system").
 
 ## Run it
@@ -86,8 +93,23 @@ All under `/api`, signed-in, with the `x-hanger-app: 1` header on changes.
 | `POST /stock/receive`, `/stock/count`, `/stock/transfer`, `GET /stock/moves` | stock |
 | `GET /orders`, `GET /orders/:id` | orders with their invoices |
 | `POST /orders/:id/{confirm,cancel,payment-choice,state,pack,ship,deliver,rto,return}` | order steps |
+| `GET /orders/:id/courier-rates?weight=`, `POST /orders/:id/{book-courier,courier-label,cancel-courier}` | courier booking |
+| `GET /shipping/pickup-locations` | pickup addresses saved in Shiprocket |
 | `POST /store-sales` | counter sale |
 | `GET /invoices/:id`, `GET/PATCH /settings`, `GET /summary` | |
 | `POST /uploads` (image body) | product photo, served at `/media/...` |
 
-Webhooks: `/webhooks/whatsapp` (Meta, signed), `/webhooks/razorpay` (signed).
+Webhooks: `/webhooks/whatsapp` (Meta, signed), `/webhooks/razorpay` (signed),
+`/webhooks/courier-updates` (Shiprocket tracking, `x-api-key` token; the URL must not contain
+"shiprocket", "sr" or "kr", Shiprocket's rule).
+
+### Shiprocket set-up
+
+1. In the brand's Shiprocket account: Settings > API > create an API user (an email other than the
+   main login). Put it in `SHIPROCKET_EMAIL` / `SHIPROCKET_PASSWORD` and set `SHIPPING_PROVIDER=shiprocket`.
+2. Settings > API > Webhooks: URL `https://<server>/webhooks/courier-updates`, security token =
+   `SHIPROCKET_WEBHOOK_TOKEN` (16+ random characters), switch it on.
+3. In the staff app, Settings > Shipping: choose the pickup address and the usual parcel size.
+
+For a demo without an account, `.env` can point at the stand-in courier (`src/scripts/fakeCourier.js`,
+started by `dev.bat`); move a parcel on with `POST http://127.0.0.1:4299/_demo/push {"awb","status"}`.

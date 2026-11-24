@@ -15,6 +15,7 @@ import { createRealtimeHub } from "./realtime/hub.js";
 import { createCommerceRouter } from "./routes/commerce.js";
 import { createUploadsRouter } from "./routes/uploads.js";
 import { createRazorpayWebhookRouter } from "./payments/handlers.js";
+import { createCourierWebhookRouter } from "./shipping/courier.js";
 
 // Jobs waiting longer than this mean the worker is down or stuck: the readiness check fails so the
 // uptime monitor alerts someone.
@@ -50,6 +51,7 @@ export function createApp({ config, logger, fetchImpl, services = createServices
   // The webhook reads its own raw body (signature check), so it is mounted before the JSON parser.
   app.use(createWebhookRouter({ config, logger }));
   app.use(createRazorpayWebhookRouter({ config, logger }));
+  app.use(createCourierWebhookRouter({ config, logger }));
 
   const realtime = createRealtimeHub({ tenantId: config.TENANT_ID, logger });
   app.locals.realtime = realtime;

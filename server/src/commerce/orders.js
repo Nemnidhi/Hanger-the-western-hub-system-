@@ -264,6 +264,7 @@ export async function paymentReceived({ tenantId, order, by = "razorpay", sessio
 /** Cancels an order that has not shipped: held stock is released, taken stock goes back on the shelf. */
 export async function cancelOrder({ tenantId, order, by, reason = "", session, now = new Date() }) {
   if (["shipped", "delivered", "rto", "returned", "cancelled"].includes(order.status)) throw httpError(409, "A shipped, delivered or cancelled order cannot be cancelled.", "NOT_CANCELLABLE");
+  if (order.shipment?.providerOrderId) throw httpError(409, "A courier is booked for this order. Cancel the courier booking first.", "COURIER_BOOKED");
   const settings = await getSettings(tenantId, session);
   if (order.stockState === "held") {
     await releaseStock({ tenantId, locationId: order.locationId, lines: order.lines, session });
@@ -299,7 +300,8 @@ export async function markPacked({ tenantId, order, by, session, now = new Date(
   return order;
 }
 
-export async function markShipped({ tenantId, order, courier, awb, by, session, now = new Date() }) {
+/** Handed to the courier. `notify: false` when a late tracking update already says it is further along. */
+export async function markShipped({ tenantId, order, courier, awb, by, notify = true, session, now = new Date() }) {
   if (order.status !== "packed") throw httpError(409, "Pack the order before shipping it.", "NOT_PACKED");
   if (!courier || !awb) throw httpError(400, "Courier and tracking number are needed.", "NO_TRACKING");
   const settings = await getSettings(tenantId, session);
@@ -308,7 +310,7 @@ export async function markShipped({ tenantId, order, courier, awb, by, session, 
   order.shipment.awb = String(awb).slice(0, 40);
   order.shipment.shippedAt = now;
   order.history.push(historyEntry(by, "shipped", `${order.shipment.courier} ${order.shipment.awb}`, now));
-  await tellCustomer({ tenantId, order, content: say.shipped(order, settings.orderPrefix), settings, session, now });
+  if (notify) await tellCustomer({ tenantId, order, content: say.shipped(order, settings.orderPrefix), settings, session, now });
   await order.save({ session });
   return order;
 }

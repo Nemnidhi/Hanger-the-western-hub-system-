@@ -34,6 +34,14 @@ const settingsSchema = new mongoose.Schema(
       // An unconfirmed COD order is cancelled and its stock released after this many hours.
       confirmHours: { type: Number, default: 12, min: 1, max: 72 },
     },
+    // Courier booking defaults. pickupLocation is the pickup address's name in the Shiprocket account.
+    shipping: {
+      pickupLocation: { type: String, default: "", trim: true, maxlength: 60 },
+      weightGrams: { type: Number, default: 500, min: 50, max: 30000 },
+      lengthCm: { type: Number, default: 30, min: 1, max: 200 },
+      breadthCm: { type: Number, default: 25, min: 1, max: 200 },
+      heightCm: { type: Number, default: 4, min: 1, max: 200 },
+    },
     // Approved Utility template for order updates outside WhatsApp's 24-hour window
     // (blanks: first name, order number, status words).
     templates: {

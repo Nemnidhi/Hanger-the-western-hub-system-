@@ -5,7 +5,7 @@ import type { Location, Settings, Supplier } from "../types";
 
 // The owner's settings: business and GST details, cash-on-delivery rules, locations and suppliers.
 export function SettingsPage({ me }: { me: Me }) {
-  const loaded = useLoad<{ settings: Settings; paymentsReady: boolean }>("/api/settings");
+  const loaded = useLoad<{ settings: Settings; paymentsReady: boolean; courierReady: boolean }>("/api/settings");
   const locations = useLoad<{ locations: Location[] }>("/api/locations");
   const canWrite = can(me, "settings:write");
   return (
@@ -13,6 +13,7 @@ export function SettingsPage({ me }: { me: Me }) {
       <h1>Settings</h1>
       <Notice>{loaded.error}</Notice>
       {loaded.data && locations.data && <BusinessForm settings={loaded.data.settings} paymentsReady={loaded.data.paymentsReady} locations={locations.data.locations} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <ShippingForm settings={loaded.data.settings} courierReady={loaded.data.courierReady} canWrite={canWrite} onSaved={loaded.reload} />}
       <Locations canWrite={canWrite} onlineCode={loaded.data?.settings.onlineLocationCode || ""} list={locations} />
       <Suppliers canWrite={can(me, "catalog:write")} />
     </div>
@@ -143,6 +144,81 @@ function BusinessForm({ settings, paymentsReady, locations, canWrite, onSaved }:
       {canWrite && (
         <button className="btn primary" disabled={busy}>
           Save settings
+        </button>
+      )}
+    </form>
+  );
+}
+
+/** Courier booking: which Shiprocket pickup address to use, and the usual parcel size. */
+function ShippingForm({ settings, courierReady, canWrite, onSaved }: { settings: Settings; courierReady: boolean; canWrite: boolean; onSaved: () => void }) {
+  const shipping = settings.shipping || { pickupLocation: "", weightGrams: 500, lengthCm: 30, breadthCm: 25, heightCm: 4 };
+  const pickups = useLoad<{ ready: boolean; locations: { name: string; pincode: string; city: string; primary: boolean }[] }>(courierReady ? "/api/shipping/pickup-locations" : null);
+  const [form, setForm] = useState(() => ({ ...shipping, weightGrams: String(shipping.weightGrams), lengthCm: String(shipping.lengthCm), breadthCm: String(shipping.breadthCm), heightCm: String(shipping.heightCm) }));
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setForm({ ...form, [key]: event.target.value });
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", {
+        method: "PATCH",
+        body: { shipping: { pickupLocation: form.pickupLocation.trim(), weightGrams: Number(form.weightGrams), lengthCm: Number(form.lengthCm), breadthCm: Number(form.breadthCm), heightCm: Number(form.heightCm) } },
+      });
+      setSaved("Saved.");
+      onSaved();
+    });
+  const names = pickups.data?.locations || [];
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>Shipping</h2>
+      <p className="muted small-text">
+        {courierReady
+          ? "Couriers are booked through the brand's own Shiprocket account. Tracking updates move orders to Shipped, Delivered or RTO by themselves."
+          : "Courier booking is not connected: staff type the courier and tracking number by hand. To connect Shiprocket, add its API user to the server settings."}
+      </p>
+      <fieldset disabled={!canWrite}>
+        <div className="form-grid">
+          <div className="field span-2">
+            <label htmlFor="pickup">Pickup address (its name in Shiprocket)</label>
+            {names.length > 0 ? (
+              <select id="pickup" className="input" value={form.pickupLocation} onChange={set("pickupLocation")}>
+                <option value="">Choose the pickup address</option>
+                {names.map((row) => (
+                  <option key={row.name} value={row.name}>
+                    {row.name} · {row.city} {row.pincode}
+                    {row.primary ? " (primary)" : ""}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input id="pickup" className="input" value={form.pickupLocation} onChange={set("pickupLocation")} placeholder="Primary" />
+            )}
+          </div>
+          <div className="field">
+            <label htmlFor="grams">Usual parcel weight (grams)</label>
+            <input id="grams" className="input" type="number" min={50} max={30000} step={50} value={form.weightGrams} onChange={set("weightGrams")} />
+          </div>
+          <div className="field">
+            <label htmlFor="length">Box length (cm)</label>
+            <input id="length" className="input" type="number" min={1} max={200} value={form.lengthCm} onChange={set("lengthCm")} />
+          </div>
+          <div className="field">
+            <label htmlFor="breadth">Breadth (cm)</label>
+            <input id="breadth" className="input" type="number" min={1} max={200} value={form.breadthCm} onChange={set("breadthCm")} />
+          </div>
+          <div className="field">
+            <label htmlFor="height">Height (cm)</label>
+            <input id="height" className="input" type="number" min={1} max={200} value={form.heightCm} onChange={set("heightCm")} />
+          </div>
+        </div>
+        <p className="muted small-text">Couriers charge by the higher of the real weight and the box size (length x breadth x height / 5000 kg), so a snug box costs less.</p>
+      </fieldset>
+      <Notice>{pickups.error}</Notice>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+      {canWrite && (
+        <button className="btn primary" disabled={busy}>
+          Save shipping
         </button>
       )}
     </form>

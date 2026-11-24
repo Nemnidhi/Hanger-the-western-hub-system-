@@ -10,6 +10,7 @@ import { addSizes, createStyle, updateStyle } from "../commerce/catalog.js";
 import { adjustStock, receiveStock, transferStock } from "../commerce/stock.js";
 import { GST_STATES } from "../commerce/pincode.js";
 import * as orders from "../commerce/orders.js";
+import { bookCourier, cancelBooking, courierRates, refreshLabel } from "../shipping/courier.js";
 
 // The staff app's API for the catalogue, stock, orders, invoices and settings.
 
@@ -48,6 +49,7 @@ export function createCommerceRouter({ config, services }) {
   // A malformed id is "not found", never a database cast error.
   router.param("id", (req, res, next, value) => (mongoose.isValidObjectId(value) ? next() : next(httpError(404, "Not found", "NOT_FOUND"))));
   const razorpayReady = Boolean(services?.razorpay);
+  const courier = services?.courier || null;
 
   async function skusByCode(codes, session) {
     const skus = await Sku.find({ tenantId, code: mongoose.trusted({ $in: codes.map((code) => code.toUpperCase()) }) }).session(session || null);
@@ -245,7 +247,7 @@ export function createCommerceRouter({ config, services }) {
     const order = await Order.findOne({ _id: req.params.id, tenantId }).lean();
     if (!order) throw httpError(404, "Order not found");
     const invoices = await Invoice.find({ orderId: order._id }).lean();
-    res.json({ order, invoices });
+    res.json({ order, invoices, courierReady: Boolean(courier) });
   }));
 
   // A sale at the store counter (the POS screen calls this).
@@ -296,6 +298,37 @@ export function createCommerceRouter({ config, services }) {
     });
   }));
 
+  // ---- Courier booking ---------------------------------------------------------------------------
+  const weight = z.coerce.number().int().min(50).max(30000).optional();
+  router.get("/api/orders/:id/courier-rates", requireAuth(), requirePermission("orders:fulfil"), route(async (req, res) => {
+    const order = await Order.findOne({ _id: req.params.id, tenantId });
+    if (!order) throw httpError(404, "Order not found");
+    const query = parseBody(z.object({ weight }), { body: req.query });
+    res.json(await courierRates({ tenantId, order, courier, weightGrams: query.weight }));
+  }));
+
+  router.post("/api/orders/:id/book-courier", requireAuth(), requirePermission("orders:fulfil"), route(async (req, res) => {
+    const body = parseBody(z.object({ courierId: z.number().int().positive(), weightGrams: weight }), req);
+    const order = await bookCourier({ tenantId, orderId: req.params.id, courierId: body.courierId, weightGrams: body.weightGrams, courier, by: req.user });
+    await audit({ req, action: "order.book_courier", meta: { orderId: order._id, awb: order.shipment.awb } });
+    res.json({ order });
+  }));
+
+  router.post("/api/orders/:id/courier-label", requireAuth(), requirePermission("orders:fulfil"), route(async (req, res) => {
+    res.json({ order: await refreshLabel({ tenantId, orderId: req.params.id, courier }) });
+  }));
+
+  router.post("/api/orders/:id/cancel-courier", requireAuth(), requirePermission("orders:fulfil"), route(async (req, res) => {
+    const order = await cancelBooking({ tenantId, orderId: req.params.id, courier, by: req.user });
+    await audit({ req, action: "order.cancel_courier", meta: { orderId: order._id } });
+    res.json({ order });
+  }));
+
+  // The pickup addresses saved in the Shiprocket account (for the Settings page).
+  router.get("/api/shipping/pickup-locations", requireAuth(), requirePermission("settings:read"), route(async (req, res) => {
+    res.json({ ready: Boolean(courier), locations: courier ? await courier.pickupLocations() : [] });
+  }));
+
   router.get("/api/invoices/:id", requireAuth(), requirePermission("orders:read"), route(async (req, res) => {
     const invoice = await Invoice.findOne({ _id: req.params.id, tenantId }).lean();
     if (!invoice) throw httpError(404, "Invoice not found");
@@ -304,7 +337,7 @@ export function createCommerceRouter({ config, services }) {
 
   // ---- Settings ----------------------------------------------------------------------------------
   router.get("/api/settings", requireAuth(), requirePermission("settings:read"), route(async (req, res) => {
-    res.json({ settings: await getSettings(tenantId), paymentsReady: razorpayReady });
+    res.json({ settings: await getSettings(tenantId), paymentsReady: razorpayReady, courierReady: Boolean(courier) });
   }));
 
   router.patch("/api/settings", requireAuth(), requirePermission("settings:write"), route(async (req, res) => {
@@ -320,6 +353,7 @@ export function createCommerceRouter({ config, services }) {
         defaultHsn: z.string().regex(/^\d{4,8}$/).optional(),
         paymentHoldMinutes: z.number().int().min(5).max(1440).optional(),
         cod: z.object({ enabled: z.boolean().optional(), maxOrderPaise: z.number().int().min(0).optional(), lowBelow: z.number().min(0).max(1).optional(), highFrom: z.number().min(0).max(1).optional(), confirmHours: z.number().int().min(1).max(72).optional() }).optional(),
+        shipping: z.object({ pickupLocation: z.string().trim().max(60).optional(), weightGrams: z.number().int().min(50).max(30000).optional(), lengthCm: z.number().int().min(1).max(200).optional(), breadthCm: z.number().int().min(1).max(200).optional(), heightCm: z.number().int().min(1).max(200).optional() }).optional(),
         templates: z.object({ orderUpdate: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional() }).optional(),
       }),
       req,

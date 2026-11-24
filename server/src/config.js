@@ -49,9 +49,24 @@ const schema = z.object({
   MSG91_TEMPLATE_ORDER_UPDATE: optional(z.string().min(4)),
   MSG91_TEMPLATE_DELIVERY_CODE: optional(z.string().min(4)),
   MSG91_API_BASE: z.url().default("https://control.msg91.com"),
+
+  // Courier booking through Shiprocket, on the brand's own Shiprocket account. Use a separate API
+  // user (Shiprocket > Settings > API), not the main login. "none": tracking numbers are typed in by hand.
+  SHIPPING_PROVIDER: z.enum(["none", "shiprocket"]).default("none"),
+  SHIPROCKET_EMAIL: optional(z.email()),
+  SHIPROCKET_PASSWORD: optional(z.string().min(6)),
+  // Sent by Shiprocket as x-api-key on every tracking update (set the same token in its webhook page).
+  SHIPROCKET_WEBHOOK_TOKEN: optional(z.string().min(16, "SHIPROCKET_WEBHOOK_TOKEN must be at least 16 characters")),
+  // Only tests and the demo point this elsewhere (a local stand-in for Shiprocket).
+  SHIPROCKET_API_BASE: z.url().default("https://apiv2.shiprocket.in/v1/external"),
 }).superRefine((value, ctx) => {
   const razorpay = [value.RAZORPAY_KEY_ID, value.RAZORPAY_KEY_SECRET, value.RAZORPAY_WEBHOOK_SECRET].filter(Boolean).length;
   if (razorpay && razorpay < 3) ctx.addIssue({ code: "custom", path: ["RAZORPAY_KEY_ID"], message: "Set all three Razorpay settings, or none" });
+  if (value.SHIPPING_PROVIDER === "shiprocket") {
+    for (const name of ["SHIPROCKET_EMAIL", "SHIPROCKET_PASSWORD", "SHIPROCKET_WEBHOOK_TOKEN"]) {
+      if (!value[name]) ctx.addIssue({ code: "custom", path: [name], message: `${name} is required for SHIPPING_PROVIDER=shiprocket` });
+    }
+  }
   if (value.SMS_PROVIDER === "msg91") {
     for (const name of ["MSG91_AUTH_KEY", "MSG91_TEMPLATE_ORDER_UPDATE", "MSG91_TEMPLATE_DELIVERY_CODE"]) {
       if (!value[name]) ctx.addIssue({ code: "custom", path: [name], message: `${name} is required for SMS_PROVIDER=msg91` });

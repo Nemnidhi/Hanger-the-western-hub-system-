@@ -60,7 +60,7 @@ async function photo(name, colour) {
   return `${base}/media/demo-${name}.png`;
 }
 
-await Settings.create({ tenantId, brandName: "The Hanger", legalName: "The Hanger Western Hub (demo)", gstin: "23ABCDE1234F1Z5", registeredAddress: "MG Road, New Palasia, Indore 452001", stateCode: "23", onlineLocationCode: "ONL" });
+await Settings.create({ tenantId, brandName: "The Hanger", legalName: "The Hanger Western Hub (demo)", gstin: "23ABCDE1234F1Z5", registeredAddress: "MG Road, New Palasia, Indore 452001", stateCode: "23", onlineLocationCode: "ONL", shipping: { pickupLocation: "Hanger online stock room" } });
 const [store, online] = await Location.create([
   { tenantId, code: "ST1", name: "MG Road store", kind: "store", address: "MG Road, New Palasia, Indore", pincode: "452001", invoicePrefix: "ST1" },
   { tenantId, code: "ONL", name: "Online stock room", kind: "warehouse", address: "New Palasia, Indore", pincode: "452001", invoicePrefix: "IN1" },

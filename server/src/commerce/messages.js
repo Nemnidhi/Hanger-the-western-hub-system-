@@ -66,7 +66,12 @@ export const confirmed = (order, prefix) => ({
 });
 
 export const shipped = (order, prefix) => ({
-  text: `Order ${label(order, prefix)} has shipped with ${order.shipment.courier}. Tracking number: ${order.shipment.awb}.`,
+  text: `Order ${label(order, prefix)} has shipped with ${order.shipment.courier}. Tracking number: ${order.shipment.awb}.${order.shipment.provider === "shiprocket" ? `
+Track it here: https://shiprocket.co/tracking/${encodeURIComponent(order.shipment.awb)}` : ""}`,
+});
+
+export const outForDelivery = (order, prefix) => ({
+  text: `Order ${label(order, prefix)} is out for delivery today with ${order.shipment.courier || "the courier"}.${order.payment.method === "cod" && order.payment.status !== "paid" ? ` Please keep ${rupees(order.totals.totalPaise)} ready.` : ""}`,
 });
 
 export const delivered = (order, prefix) => ({

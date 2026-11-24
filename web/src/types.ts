@@ -91,7 +91,25 @@ export interface Order {
   stockState: "held" | "committed" | "released";
   holdUntil: string | null;
   confirmedAt: string | null;
-  shipment: { courier: string; awb: string; shippedAt: string | null; deliveredAt: string | null; rtoAt: string | null };
+  shipment: {
+    courier: string;
+    awb: string;
+    shippedAt: string | null;
+    deliveredAt: string | null;
+    rtoAt: string | null;
+    provider?: "" | "shiprocket";
+    providerOrderId?: string;
+    chargePaise?: number | null;
+    weightGrams?: number | null;
+    labelUrl?: string;
+    pickupNote?: string;
+    bookedAt?: string | null;
+    trackingStatus?: string;
+    trackedAt?: string | null;
+    outForDeliveryAt?: string | null;
+    rtoStartedAt?: string | null;
+    events?: { at: string; status: string; activity: string; location: string }[];
+  };
   invoiceId: string | null;
   creditNoteId: string | null;
   cancelReason: string;
@@ -140,6 +158,19 @@ export interface Settings {
   paymentHoldMinutes: number;
   cod: { enabled: boolean; maxOrderPaise: number; lowBelow: number; highFrom: number; confirmHours: number };
   templates: { orderUpdate: { name: string; language: string } };
+  shipping: { pickupLocation: string; weightGrams: number; lengthCm: number; breadthCm: number; heightCm: number };
+}
+
+export interface CourierRate {
+  courierId: number;
+  name: string;
+  ratePaise: number | null;
+  codChargePaise: number;
+  days: string;
+  etd: string;
+  rating: number | null;
+  surface: boolean;
+  recommended: boolean;
 }
 
 export interface Summary {

@@ -89,6 +89,29 @@ const orderSchema = new mongoose.Schema(
       shippedAt: { type: Date, default: null },
       deliveredAt: { type: Date, default: null },
       rtoAt: { type: Date, default: null },
+      // Set when the courier was booked through the shipping provider ("" = tracking typed in by hand).
+      provider: { type: String, enum: ["", "shiprocket"], default: "" },
+      providerOrderId: { type: String, default: "" },
+      shipmentId: { type: String, default: "" },
+      courierId: { type: Number, default: null },
+      chargePaise: { type: Number, default: null },
+      weightGrams: { type: Number, default: null },
+      labelUrl: { type: String, default: "" },
+      pickupNote: { type: String, default: "" },
+      bookedAt: { type: Date, default: null },
+      // A booking in progress (a lock, so two clicks cannot book two couriers). Cleared when done.
+      bookingStartedAt: { type: Date, default: null },
+      // Each new booking after a cancelled one gets a fresh reference at the provider.
+      attempts: { type: Number, default: 0 },
+      // The courier's latest word and its scans, from the webhook or the poll.
+      trackingStatus: { type: String, default: "" },
+      trackedAt: { type: Date, default: null },
+      outForDeliveryAt: { type: Date, default: null },
+      rtoStartedAt: { type: Date, default: null },
+      events: {
+        type: [new mongoose.Schema({ at: Date, status: String, activity: String, location: String }, { _id: false })],
+        default: [],
+      },
     },
     invoiceId: { type: ObjectId, ref: "Invoice", default: null },
     creditNoteId: { type: ObjectId, ref: "Invoice", default: null },
@@ -103,6 +126,7 @@ orderSchema.index({ tenantId: 1, status: 1, createdAt: -1 });
 orderSchema.index({ contactId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, holdUntil: 1 });
 orderSchema.index({ tenantId: 1, "payment.linkId": 1 });
+orderSchema.index({ tenantId: 1, "shipment.awb": 1 });
 
 export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 

@@ -23,8 +23,19 @@ function scheduleCatalogSync() {
   const slot = Math.floor(Date.now() / SYNC_MS);
   enqueue("catalog.syncMeta", {}, { dedupeKey: `metasync:${slot}` }).catch((error) => logger.warn({ err: { message: error?.message } }, "could not schedule catalogue sync"));
 }
-scheduleCatalogSync();
-const timer = setInterval(scheduleCatalogSync, 60 * 1000);
+// Booked parcels are checked with the courier every hour, in case a tracking webhook was missed.
+const POLL_MS = 60 * 60 * 1000;
+function scheduleTrackingPoll() {
+  if (config.SHIPPING_PROVIDER === "none") return;
+  const slot = Math.floor(Date.now() / POLL_MS);
+  enqueue("shipping.poll", {}, { dedupeKey: `shippoll:${slot}` }).catch((error) => logger.warn({ err: { message: error?.message } }, "could not schedule tracking check"));
+}
+function scheduleAll() {
+  scheduleCatalogSync();
+  scheduleTrackingPoll();
+}
+scheduleAll();
+const timer = setInterval(scheduleAll, 60 * 1000);
 timer.unref();
 
 let shuttingDown = false;
