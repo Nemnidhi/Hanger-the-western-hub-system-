@@ -41,7 +41,7 @@ const messageSchema = new mongoose.Schema(
     at: { type: Date, default: () => new Date() },
     // Outbound: what this message is for. Order messages carry an SMS fallback ({ kind, vars }) used
     // when WhatsApp cannot deliver; offers never do.
-    purpose: { type: String, enum: ["chat", "order", "refill", "offer", "consent"], default: "chat" },
+    purpose: { type: String, enum: ["chat", "order", "refill", "offer", "consent", "picks"], default: "chat" },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order", default: null },
     offerId: { type: mongoose.Schema.Types.ObjectId, ref: "Offer", default: null },
     fallback: { type: mongoose.Schema.Types.Mixed, default: null },

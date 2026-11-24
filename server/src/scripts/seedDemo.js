@@ -1,4 +1,4 @@
-// Fills a DEVELOPMENT database with a demo boutique: two locations, suppliers, eight live styles with
+// Fills a DEVELOPMENT database with a demo boutique: two locations, suppliers, twelve live styles with
 // stock (plain colour swatches as photos), staff logins and orders in every state. It wipes the
 // database first, so it refuses to run in production or on a database whose name lacks "dev"/"demo".
 //   node src/scripts/seedDemo.js
@@ -70,27 +70,32 @@ const [surat, jaipur] = await Supplier.create([
   { tenantId, name: "Jaipur Prints (demo)", city: "Jaipur", notes: "Block-print cotton" },
 ]);
 
+// occasion / pairsWith / sizing / days on the rail feed the trial room's outfit picks.
 const STYLES = [
-  { code: "DRS-001", name: "Linen midi dress", category: "dresses", price: 1999, colour: "sage", rgb: [156, 175, 136], supplier: surat, sizes: ["XS", "S", "M", "L", "XL"] },
-  { code: "DRS-002", name: "Satin slip dress", category: "dresses", price: 2499, colour: "wine", rgb: [122, 46, 79], supplier: surat, sizes: ["S", "M", "L"] },
-  { code: "TOP-014", name: "Satin wrap top", category: "tops", price: 1299, colour: "champagne", rgb: [222, 198, 160], supplier: surat, sizes: ["XS", "S", "M", "L"] },
-  { code: "TOP-021", name: "Block-print cotton top", category: "tops", price: 899, colour: "indigo", rgb: [60, 72, 130], supplier: jaipur, sizes: ["S", "M", "L", "XL"] },
-  { code: "COR-005", name: "Linen co-ord set", category: "co-ords", price: 3299, colour: "sand", rgb: [205, 186, 150], supplier: surat, sizes: ["S", "M", "L"] },
-  { code: "JNS-030", name: "Wide-leg jeans", category: "jeans", price: 1799, colour: "mid blue", rgb: [92, 124, 168], supplier: surat, sizes: ["26", "28", "30", "32"] },
-  { code: "SKT-008", name: "Pleated midi skirt", category: "skirts", price: 1499, colour: "black", rgb: [40, 40, 44], supplier: surat, sizes: ["S", "M", "L"] },
-  { code: "JKT-002", name: "Cropped denim jacket", category: "jackets", price: 2799, colour: "light wash", rgb: [150, 176, 204], supplier: surat, sizes: ["S", "M", "L"] },
+  { code: "DRS-001", name: "Linen midi dress", category: "dresses", price: 1999, colour: "sage", rgb: [156, 175, 136], supplier: surat, sizes: ["XS", "S", "M", "L", "XL"], occasion: ["brunch", "day out"], pairsWith: ["JKT-002"], days: 40 },
+  { code: "DRS-002", name: "Satin slip dress", category: "dresses", price: 2499, colour: "wine", rgb: [122, 46, 79], supplier: surat, sizes: ["S", "M", "L"], occasion: ["date", "party"], pairsWith: ["JKT-010"], sizing: "runs_small", days: 6 },
+  { code: "TOP-014", name: "Satin wrap top", category: "tops", price: 1299, colour: "champagne", rgb: [222, 198, 160], supplier: surat, sizes: ["XS", "S", "M", "L"], occasion: ["date", "party"], pairsWith: ["SKT-008", "JNS-030"], days: 25 },
+  { code: "TOP-021", name: "Block-print cotton top", category: "tops", price: 899, colour: "indigo", rgb: [60, 72, 130], supplier: jaipur, sizes: ["S", "M", "L", "XL"], occasion: ["day out", "work"], pairsWith: ["JNS-030"], days: 70 },
+  { code: "TOP-040", name: "Poplin shirt", category: "tops", price: 1399, colour: "white", rgb: [240, 238, 232], supplier: jaipur, sizes: ["S", "M", "L"], occasion: ["work"], pairsWith: ["BTM-012", "JKT-010"], days: 9 },
+  { code: "COR-005", name: "Linen co-ord set", category: "co-ords", price: 3299, colour: "sand", rgb: [205, 186, 150], supplier: surat, sizes: ["S", "M", "L"], occasion: ["brunch", "work"], days: 30 },
+  { code: "JNS-030", name: "Wide-leg jeans", category: "jeans", price: 1799, colour: "mid blue", rgb: [92, 124, 168], supplier: surat, sizes: ["26", "28", "30", "32"], occasion: ["day out"], pairsWith: ["TOP-014", "TOP-021"], days: 50 },
+  { code: "BTM-012", name: "Straight trousers", category: "trousers", price: 1999, colour: "taupe", rgb: [150, 132, 116], supplier: surat, sizes: ["26", "28", "30", "32"], occasion: ["work"], pairsWith: ["TOP-040"], days: 55 },
+  { code: "SKT-008", name: "Pleated midi skirt", category: "skirts", price: 1499, colour: "black", rgb: [40, 40, 44], supplier: surat, sizes: ["S", "M", "L"], occasion: ["work", "date"], pairsWith: ["TOP-014"], days: 20 },
+  { code: "JKT-002", name: "Cropped denim jacket", category: "jackets", price: 2799, colour: "light wash", rgb: [150, 176, 204], supplier: surat, sizes: ["S", "M", "L"], occasion: ["day out", "brunch"], sizing: "runs_large", days: 35 },
+  { code: "JKT-010", name: "Linen blazer", category: "jackets", price: 3499, colour: "ivory", rgb: [236, 228, 210], supplier: surat, sizes: ["S", "M", "L"], occasion: ["work", "date"], pairsWith: ["BTM-012", "SKT-008"], days: 4 },
+  { code: "JKT-015", name: "Soft cardigan", category: "cardigans", price: 1899, colour: "dusty rose", rgb: [206, 160, 160], supplier: jaipur, sizes: ["S", "M", "L"], occasion: ["brunch", "day out"], days: 62 },
 ];
 
 for (const item of STYLES) {
   await withTransaction(async (session) => {
     const { style, skus } = await createStyle({
       tenantId,
-      data: { code: item.code, name: item.name, category: item.category, pricePaise: item.price * 100, costPaise: Math.round(item.price * 45), supplierId: item.supplier._id, attributes: { colour: item.colour }, images: [await photo(item.code.toLowerCase(), item.rgb)], description: `${item.name} in ${item.colour}.` },
+      data: { code: item.code, name: item.name, category: item.category, pricePaise: item.price * 100, costPaise: Math.round(item.price * 45), supplierId: item.supplier._id, attributes: { colour: item.colour, occasion: item.occasion || [] }, pairsWith: item.pairsWith || [], sizing: item.sizing || "true", images: [await photo(item.code.toLowerCase(), item.rgb)], description: `${item.name} in ${item.colour}.` },
       sizes: item.sizes,
       session,
     });
     style.status = "live";
-    style.liveAt = new Date();
+    style.liveAt = new Date(Date.now() - (item.days || 30) * 86_400_000);
     await style.save({ session });
     // A realistic spread: more of the middle sizes, one size down to its last piece.
     const qty = (size, index) => (["M", "28", "30"].includes(size) ? 4 : index === 0 ? 1 : 2);
@@ -132,6 +137,10 @@ await onlineOrder({ waId: "919800000104", name: "Simran Kaur", items: [{ skuCode
 await onlineOrder({ waId: "919800000105", name: "Ananya", items: [{ skuCode: "JNS-030-28", qty: 1 }], minutesAgo: 10 });
 await withTransaction((session) => storeSale({ tenantId, locationId: store._id, items: [{ skuCode: "TOP-021-M", qty: 2 }], method: "store_upi", customer: { name: "Walk-in" }, by: "Riya (store)", session, now: at(120) }));
 await withTransaction((session) => storeSale({ tenantId, locationId: store._id, items: [{ skuCode: "DRS-001-S", qty: 1 }, { skuCode: "SKT-008-M", qty: 1 }], method: "store_cash", by: "Riya (store)", session, now: at(40) }));
+// A regular for the trial room: two earlier visits, sizes on file, agreed to picks on WhatsApp.
+await Contact.create({ tenantId, waId: "919800000110", name: "Meera Joshi", profileName: "Meera", fit: { usualSize: "M", waist: "30" }, consents: { offers: { given: true, at: at(60 * 24 * 20), source: "store:Riya (store)" } } });
+await withTransaction((session) => storeSale({ tenantId, locationId: store._id, items: [{ skuCode: "TOP-014-M", qty: 1 }, { skuCode: "JNS-030-30", qty: 1 }], method: "store_upi", customer: { name: "Meera Joshi", phone: "9800000110" }, by: "Riya (store)", session, now: at(60 * 24 * 20) }));
+await withTransaction((session) => storeSale({ tenantId, locationId: store._id, items: [{ skuCode: "SKT-008-M", qty: 1 }], method: "store_card", customer: { name: "Meera Joshi", phone: "9800000110" }, by: "Riya (store)", session, now: at(60 * 24 * 6) }));
 
 console.log(`Demo boutique ready in "${dbName}".`);
 console.log(`Sign in: owner@hanger.local / ${password}  (two-step code: node src/scripts/demoCode.js)`);

@@ -6,6 +6,7 @@ import { Today } from "./pages/Today";
 import { Inbox } from "./pages/Inbox";
 import { Orders } from "./pages/Orders";
 import { Counter } from "./pages/Counter";
+import { TrialRoom } from "./pages/TrialRoom";
 import { Catalogue } from "./pages/Catalogue";
 import { Stock } from "./pages/Stock";
 import { Templates } from "./pages/Templates";
@@ -14,8 +15,8 @@ import { Team } from "./pages/Team";
 import { Account } from "./pages/Account";
 import { InvoicePrint } from "./pages/InvoicePrint";
 
-type Page = "today" | "inbox" | "orders" | "counter" | "catalogue" | "stock" | "templates" | "settings" | "team" | "account";
-const PAGES: Page[] = ["today", "inbox", "orders", "counter", "catalogue", "stock", "templates", "settings", "team", "account"];
+type Page = "today" | "inbox" | "orders" | "counter" | "trial" | "catalogue" | "stock" | "templates" | "settings" | "team" | "account";
+const PAGES: Page[] = ["today", "inbox", "orders", "counter", "trial", "catalogue", "stock", "templates", "settings", "team", "account"];
 
 function readHash(): { page: Page; invoiceId: string } {
   const [first, second] = window.location.hash.replace(/^#\/?/, "").split("/");
@@ -66,6 +67,7 @@ export function App() {
     { id: "inbox", label: "Chats", show: can(me, "inbox:read") },
     { id: "orders", label: "Orders", show: can(me, "orders:read") },
     { id: "counter", label: "Counter", show: can(me, "orders:write") },
+    { id: "trial", label: "Trial room", show: can(me, "catalog:read") },
     { id: "catalogue", label: "Catalogue", show: can(me, "catalog:read") },
     { id: "stock", label: "Stock", show: can(me, "stock:read") },
     { id: "templates", label: "Templates", show: can(me, "templates:read") },
@@ -102,6 +104,7 @@ export function App() {
         {current === "inbox" && <Inbox me={me} />}
         {current === "orders" && <Orders me={me} />}
         {current === "counter" && <Counter />}
+        {current === "trial" && <TrialRoom me={me} />}
         {current === "catalogue" && <Catalogue me={me} />}
         {current === "stock" && <Stock me={me} />}
         {current === "templates" && <Templates me={me} />}

@@ -135,6 +135,9 @@ function StyleDialog({ style, suppliers, onClose, onSaved }: { style: Style | nu
     fit: style?.attributes?.fit || "",
     pattern: style?.attributes?.pattern || "",
     occasion: (style?.attributes?.occasion || []).join(", "),
+    outfitPart: style?.outfitPart || "",
+    sizing: style?.sizing || "true",
+    pairsWith: (style?.pairsWith || []).join(", "),
     supplierId: style?.supplierId || "",
     supplierStyleRef: style?.supplierStyleRef || "",
     hsn: style?.hsn || "",
@@ -158,6 +161,9 @@ function StyleDialog({ style, suppliers, onClose, onSaved }: { style: Style | nu
       ...(cost !== undefined && cost >= 0 ? { cost: cost / 100 } : {}),
       attributes: { colour: form.colour.trim(), fabric: form.fabric.trim(), fit: form.fit.trim(), pattern: form.pattern.trim(), occasion: form.occasion.split(",").map((item) => item.trim()).filter(Boolean) },
       images: form.images,
+      outfitPart: form.outfitPart,
+      sizing: form.sizing,
+      pairsWith: form.pairsWith.split(/[\s,]+/).map((code) => code.trim().toUpperCase()).filter(Boolean).slice(0, 12),
       ...(form.supplierId ? { supplierId: form.supplierId } : {}),
       supplierStyleRef: form.supplierStyleRef.trim(),
       ...(form.hsn.trim() ? { hsn: form.hsn.trim() } : {}),
@@ -263,6 +269,29 @@ function StyleDialog({ style, suppliers, onClose, onSaved }: { style: Style | nu
           <div className="field span-2">
             <label htmlFor="occasion">Occasions</label>
             <input id="occasion" className="input" value={form.occasion} onChange={set("occasion")} placeholder="brunch, office, party" />
+          </div>
+          <div className="field">
+            <label htmlFor="part">Part of an outfit</label>
+            <select id="part" className="input" value={form.outfitPart} onChange={set("outfitPart")}>
+              <option value="">From the category</option>
+              <option value="dress">Dress / co-ord (whole look)</option>
+              <option value="top">Top</option>
+              <option value="bottom">Bottom</option>
+              <option value="layer">Layer (jacket, shrug)</option>
+              <option value="other">Not in picks</option>
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="sizing">Sizing</label>
+            <select id="sizing" className="input" value={form.sizing} onChange={set("sizing")}>
+              <option value="true">True to size</option>
+              <option value="runs_small">Runs small</option>
+              <option value="runs_large">Runs large</option>
+            </select>
+          </div>
+          <div className="field span-2">
+            <label htmlFor="pairs">Goes with (style codes, for outfit picks)</label>
+            <input id="pairs" className="input" value={form.pairsWith} onChange={set("pairsWith")} placeholder="BTM-012, JKT-010" />
           </div>
           <div className="field">
             <label htmlFor="supplier">Supplier</label>

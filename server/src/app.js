@@ -13,6 +13,7 @@ import { createUsersRouter } from "./routes/users.js";
 import { createInboxRouter } from "./routes/inbox.js";
 import { createRealtimeHub } from "./realtime/hub.js";
 import { createCommerceRouter } from "./routes/commerce.js";
+import { createPicksRouter } from "./routes/picks.js";
 import { createUploadsRouter } from "./routes/uploads.js";
 import { createRazorpayWebhookRouter } from "./payments/handlers.js";
 import { createCourierWebhookRouter } from "./shipping/courier.js";
@@ -70,6 +71,7 @@ export function createApp({ config, logger, fetchImpl, services = createServices
   app.use(createUsersRouter({ logger }));
   app.use(createInboxRouter({ config, logger, client: services.client, realtime }));
   app.use(createCommerceRouter({ config, services }));
+  app.use(createPicksRouter({ config }));
 
   // The built staff app, with every non-API path answered by index.html (client-side pages).
   const webDir = config.WEB_DIST_DIR ? path.resolve(config.WEB_DIST_DIR) : "";

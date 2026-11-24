@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, can, type Me } from "../api";
 import { Notice, toPaise, useLoad, useRun } from "../ui";
-import type { Location, Settings, Supplier } from "../types";
+import type { Location, PickPart, PickSettings, Settings, Supplier } from "../types";
 
 // The owner's settings: business and GST details, cash-on-delivery rules, locations and suppliers.
 export function SettingsPage({ me }: { me: Me }) {
@@ -14,6 +14,7 @@ export function SettingsPage({ me }: { me: Me }) {
       <Notice>{loaded.error}</Notice>
       {loaded.data && locations.data && <BusinessForm settings={loaded.data.settings} paymentsReady={loaded.data.paymentsReady} locations={locations.data.locations} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <ShippingForm settings={loaded.data.settings} courierReady={loaded.data.courierReady} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <PicksForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       <Locations canWrite={canWrite} onlineCode={loaded.data?.settings.onlineLocationCode || ""} list={locations} />
       <Suppliers canWrite={can(me, "catalog:write")} />
     </div>
@@ -219,6 +220,99 @@ function ShippingForm({ settings, courierReady, canWrite, onSaved }: { settings:
       {canWrite && (
         <button className="btn primary" disabled={busy}>
           Save shipping
+        </button>
+      )}
+    </form>
+  );
+}
+
+const PICK_PARTS: { key: PickPart; label: string; hint: string }[] = [
+  { key: "size", label: "Her size in stock", hint: "Her size (or the right one for how it runs) is on the rail, and how many are left" },
+  { key: "pair", label: "Goes with what she has on", hint: "Staff set it in the catalogue under 'Goes with'" },
+  { key: "colour", label: "Colours work together", hint: "Neutrals go with anything; some colour pairs are known to work" },
+  { key: "occasion", label: "Same occasion", hint: "Work with work, party with party" },
+  { key: "taste", label: "Her taste and budget", hint: "Her usual spend and colours; anything she returned scores nothing here" },
+  { key: "push", label: "What the shop wants moving", hint: "New arrivals and pieces on the rail a long time" },
+];
+const DEFAULT_PICKS: PickSettings = { weights: { size: 30, pair: 20, colour: 15, occasion: 15, taste: 10, push: 10 }, newDays: 14, slowDays: 45, autoSend: false, autoSendDelayMinutes: 60, minGapDays: 7, template: { name: "", language: "en" } };
+
+/** Outfit picks: how much each reason counts, the shop's push, and the automatic WhatsApp picks. */
+function PicksForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const initial = () => {
+    const picks = { ...DEFAULT_PICKS, ...(settings.picks || {}) };
+    return { ...picks, weights: { ...DEFAULT_PICKS.weights, ...picks.weights }, template: { ...DEFAULT_PICKS.template, ...picks.template } };
+  };
+  const [form, setForm] = useState(initial);
+  useEffect(() => setForm(initial()), [settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const total = PICK_PARTS.reduce((sum, part) => sum + form.weights[part.key], 0);
+  const number = (key: "newDays" | "slowDays" | "autoSendDelayMinutes" | "minGapDays") => (event: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: Number(event.target.value) });
+  const save = () =>
+    run(async () => {
+      if (!total) throw new Error("At least one reason needs a weight above 0.");
+      if (form.newDays >= form.slowDays) throw new Error("'New for' must be fewer days than 'slow after'.");
+      await api("/api/settings", { method: "PATCH", body: { picks: { ...form, template: { name: form.template.name.trim(), language: form.template.language.trim() || "en" } } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>Outfit picks</h2>
+      <p className="muted small-text">
+        In the trial room (and on WhatsApp), every live piece in stock gets a score out of 100 from these six reasons. Nothing is cut off except a piece with no size left: a higher weight makes that reason count for more.
+      </p>
+      <fieldset disabled={!canWrite}>
+        <div className="weights">
+          {PICK_PARTS.map((part) => (
+            <div key={part.key} className="weight-row">
+              <label htmlFor={`w-${part.key}`}>
+                <strong>{part.label}</strong>
+                <span className="muted small-text">{part.hint}</span>
+              </label>
+              <input id={`w-${part.key}`} type="range" min={0} max={40} value={form.weights[part.key]} onChange={(event) => setForm({ ...form, weights: { ...form.weights, [part.key]: Number(event.target.value) } })} />
+              <span className="weight-share">{total ? Math.round((form.weights[part.key] / total) * 100) : 0}%</span>
+            </div>
+          ))}
+        </div>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="new-days">New for (days on the rail)</label>
+            <input id="new-days" className="input" type="number" min={1} max={90} value={form.newDays} onChange={number("newDays")} />
+          </div>
+          <div className="field">
+            <label htmlFor="slow-days">Slow after (days on the rail)</label>
+            <input id="slow-days" className="input" type="number" min={7} max={365} value={form.slowDays} onChange={number("slowDays")} />
+          </div>
+          <div className="field">
+            <label htmlFor="picks-template">Picks template (approved by Meta)</label>
+            <input id="picks-template" className="input" value={form.template.name} onChange={(event) => setForm({ ...form, template: { ...form.template, name: event.target.value } })} placeholder="outfit_picks" />
+          </div>
+          <div className="field">
+            <label htmlFor="picks-lang">Template language</label>
+            <input id="picks-lang" className="input" value={form.template.language} onChange={(event) => setForm({ ...form, template: { ...form.template, language: event.target.value } })} placeholder="en" />
+          </div>
+          <label className="check span-3">
+            <input type="checkbox" checked={form.autoSend} onChange={(event) => setForm({ ...form, autoSend: event.target.checked })} /> Send picks automatically after a customer saves or leaves a look on the website
+          </label>
+          <div className="field">
+            <label htmlFor="delay">Wait before sending (minutes)</label>
+            <input id="delay" className="input" type="number" min={10} max={1440} value={form.autoSendDelayMinutes} onChange={number("autoSendDelayMinutes")} />
+          </div>
+          <div className="field">
+            <label htmlFor="gap">At most once in (days)</label>
+            <input id="gap" className="input" type="number" min={1} max={60} value={form.minGapDays} onChange={number("minGapDays")} />
+          </div>
+        </div>
+        <p className="muted small-text">
+          Picks go only to customers who agreed to offers on WhatsApp. Inside 24 hours of her last message they go as a product list from the catalogue; after that only the approved template can be sent. The template's body needs three blanks: her first name, the piece she looked at, and the picks (for example: "Hi {"{{1}}"}, these go with the {"{{2}}"}: {"{{3}}"}. Reply to see them.").
+        </p>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+      {canWrite && (
+        <button className="btn primary" disabled={busy}>
+          Save outfit picks
         </button>
       )}
     </form>

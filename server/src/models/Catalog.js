@@ -54,6 +54,11 @@ const styleSchema = new mongoose.Schema(
       pattern: { type: String, default: "", trim: true, lowercase: true },
       occasion: { type: [String], default: [] },
     },
+    // For outfit picks: the part of a look this piece is ("" = worked out from the category), how its
+    // sizes run, and the styles the staff say it goes with (style codes).
+    outfitPart: { type: String, enum: ["", "dress", "top", "bottom", "layer", "other"], default: "" },
+    sizing: { type: String, enum: ["true", "runs_small", "runs_large"], default: "true" },
+    pairsWith: { type: [String], default: [] },
     images: { type: [String], default: [] },
     // Selling price per piece, GST-inclusive, in paise. Cost is what the boutique paid the supplier.
     pricePaise: { type: Number, required: true, min: 100 },

@@ -42,6 +42,27 @@ const settingsSchema = new mongoose.Schema(
       breadthCm: { type: Number, default: 25, min: 1, max: 200 },
       heightCm: { type: Number, default: 4, min: 1, max: 200 },
     },
+    // Outfit picks: how much each part of the score counts (0-40 each), when a piece counts as new or
+    // slow, and the automatic follow-up after a customer saves or leaves a look on the website.
+    picks: {
+      weights: {
+        size: { type: Number, default: 30, min: 0, max: 40 },
+        pair: { type: Number, default: 20, min: 0, max: 40 },
+        colour: { type: Number, default: 15, min: 0, max: 40 },
+        occasion: { type: Number, default: 15, min: 0, max: 40 },
+        taste: { type: Number, default: 10, min: 0, max: 40 },
+        push: { type: Number, default: 10, min: 0, max: 40 },
+      },
+      newDays: { type: Number, default: 14, min: 1, max: 90 },
+      slowDays: { type: Number, default: 45, min: 7, max: 365 },
+      autoSend: { type: Boolean, default: false },
+      autoSendDelayMinutes: { type: Number, default: 60, min: 10, max: 24 * 60 },
+      // Automatic picks go to one customer at most once in this many days.
+      minGapDays: { type: Number, default: 7, min: 1, max: 60 },
+      // Approved Marketing template for picks outside WhatsApp's 24-hour window
+      // (blanks: first name, the piece they looked at, the picks in one line).
+      template: { name: { type: String, default: "" }, language: { type: String, default: "en" } },
+    },
     // Approved Utility template for order updates outside WhatsApp's 24-hour window
     // (blanks: first name, order number, status words).
     templates: {

@@ -107,6 +107,22 @@ export function createWhatsAppClient({ accessToken, phoneNumberId, graphBase = "
         type: "interactive",
         interactive: { type: "button", body: { text: body }, action: { buttons: buttons.slice(0, 3).map((button) => ({ type: "reply", reply: { id: button.id, title: button.title.slice(0, 20) } })) } },
       }),
+    /** A product list from the Meta catalogue (up to 30 items); she can open each and add it to a cart. */
+    sendProducts: (to, { header, body, footer, catalogId, sections }) =>
+      send({
+        to,
+        type: "interactive",
+        interactive: {
+          type: "product_list",
+          header: { type: "text", text: String(header || "").slice(0, 60) },
+          body: { text: String(body || "").slice(0, 1024) },
+          ...(footer ? { footer: { text: String(footer).slice(0, 60) } } : {}),
+          action: {
+            catalog_id: catalogId,
+            sections: sections.slice(0, 10).map((section) => ({ title: String(section.title).slice(0, 24), product_items: section.productRetailerIds.slice(0, 30).map((id) => ({ product_retailer_id: id })) })),
+          },
+        },
+      }),
     sendTemplate: (to, { name, language, components = [] }) => send({ to, type: "template", template: { name, language: { code: language }, components } }),
     markRead: (waMessageId) => send({ status: "read", message_id: waMessageId }).catch(() => undefined),
   };

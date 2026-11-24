@@ -33,6 +33,10 @@ const styleFields = {
       occasion: z.array(z.string().max(40)).max(10).optional(),
     })
     .optional(),
+  // Outfit picks: the part of a look, how the sizes run, and the styles it goes with.
+  outfitPart: z.enum(["", "dress", "top", "bottom", "layer", "other"]).optional(),
+  sizing: z.enum(["true", "runs_small", "runs_large"]).optional(),
+  pairsWith: z.array(z.string().trim().toUpperCase().regex(/^[A-Z0-9][A-Z0-9-]{2,23}$/, "a style code")).max(12).optional(),
   images: z.array(z.url()).max(20).optional(),
   price: rupeesToPaise,
   cost: z.number().min(0).max(10_000_000).transform((rupees) => Math.round(rupees * 100)).optional(),
@@ -354,6 +358,17 @@ export function createCommerceRouter({ config, services }) {
         paymentHoldMinutes: z.number().int().min(5).max(1440).optional(),
         cod: z.object({ enabled: z.boolean().optional(), maxOrderPaise: z.number().int().min(0).optional(), lowBelow: z.number().min(0).max(1).optional(), highFrom: z.number().min(0).max(1).optional(), confirmHours: z.number().int().min(1).max(72).optional() }).optional(),
         shipping: z.object({ pickupLocation: z.string().trim().max(60).optional(), weightGrams: z.number().int().min(50).max(30000).optional(), lengthCm: z.number().int().min(1).max(200).optional(), breadthCm: z.number().int().min(1).max(200).optional(), heightCm: z.number().int().min(1).max(200).optional() }).optional(),
+        picks: z
+          .object({
+            weights: z.object(Object.fromEntries(["size", "pair", "colour", "occasion", "taste", "push"].map((key) => [key, z.number().int().min(0).max(40)]))).optional(),
+            newDays: z.number().int().min(1).max(90).optional(),
+            slowDays: z.number().int().min(7).max(365).optional(),
+            autoSend: z.boolean().optional(),
+            autoSendDelayMinutes: z.number().int().min(10).max(1440).optional(),
+            minGapDays: z.number().int().min(1).max(60).optional(),
+            template: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional(),
+          })
+          .optional(),
         templates: z.object({ orderUpdate: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional() }).optional(),
       }),
       req,

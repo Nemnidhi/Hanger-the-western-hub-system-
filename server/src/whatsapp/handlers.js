@@ -135,7 +135,9 @@ export function createWhatsAppHandlers({ config, client, now = () => new Date(),
         const result =
           message.type === "template"
             ? await client.sendTemplate(contact.waId, message.template)
-            : message.type === "interactive"
+            : message.type === "products"
+              ? await client.sendProducts(contact.waId, { body: message.text, ...message.data.products })
+              : message.type === "interactive"
               ? await client.sendButtons(contact.waId, { body: message.text, buttons: message.data?.buttons || [] })
               : await client.sendText(contact.waId, message.text);
         const sentAt = now();

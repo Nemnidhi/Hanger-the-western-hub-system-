@@ -39,6 +39,9 @@ export interface Style {
   supplierId: string | null;
   supplierStyleRef: string;
   status: "draft" | "live" | "archived";
+  outfitPart?: "" | "dress" | "top" | "bottom" | "layer" | "other";
+  sizing?: "true" | "runs_small" | "runs_large";
+  pairsWith?: string[];
   sizes: SizeRow[];
 }
 
@@ -159,6 +162,58 @@ export interface Settings {
   cod: { enabled: boolean; maxOrderPaise: number; lowBelow: number; highFrom: number; confirmHours: number };
   templates: { orderUpdate: { name: string; language: string } };
   shipping: { pickupLocation: string; weightGrams: number; lengthCm: number; breadthCm: number; heightCm: number };
+  picks?: PickSettings;
+}
+
+export type PickPart = "size" | "pair" | "colour" | "occasion" | "taste" | "push";
+
+export interface PickSettings {
+  weights: Record<PickPart, number>;
+  newDays: number;
+  slowDays: number;
+  autoSend: boolean;
+  autoSendDelayMinutes: number;
+  minGapDays: number;
+  template: { name: string; language: string };
+}
+
+export interface Pick {
+  styleCode: string;
+  name: string;
+  part: string;
+  kind: "complete" | "swap";
+  colour: string;
+  image: string;
+  pricePaise: number;
+  size: string;
+  skuCode: string;
+  left: number;
+  score: number;
+  parts: Record<PickPart, number>;
+  why: Record<PickPart, string>;
+}
+
+export interface PicksResult {
+  location: { code: string; name: string; kind: "store" | "warehouse" };
+  trying: { styleCode: string; name: string; part: string; colour: string; image: string }[];
+  customer: {
+    known: boolean;
+    waId: string;
+    name: string;
+    letter: string;
+    waist: string;
+    orders: number;
+    band: [number, number] | null;
+    colours: string[];
+    history: { number: number; at: string; lines: string[]; channel: string }[];
+    returned: string[];
+    offersConsent: boolean;
+  } | null;
+  weights: Record<PickPart, number>;
+  parts: { key: PickPart; name: string }[];
+  complete: Pick[];
+  swap: Pick[];
+  considered: number;
 }
 
 export interface CourierRate {

@@ -5,7 +5,8 @@ import { withTransaction } from "../db.js";
 /**
  * Queues a message to a customer. Pass `session` to save it inside the caller's own transaction. The message and its sending job are saved in one transaction, so
  * there is never a message that "should have gone" with no job to send it. Returns the message.
- * `content` is { text }, { text, buttons: [{ id, title }] } or { template: { name, language, components } },
+ * `content` is { text }, { text, buttons: [{ id, title }] }, { text, products: { header, footer, catalogId,
+ * sections: [{ title, productRetailerIds }] } } or { template: { name, language, components } },
  * optionally with `purpose`, `orderId`, `offerId` and an SMS `fallback` ({ kind, vars }) for when
  * WhatsApp cannot deliver it.
  */
@@ -19,6 +20,7 @@ export async function queueOutbound({ tenantId, session: outer }, { conversation
 
     const isTemplate = Boolean(content?.template);
     const isButtons = Boolean(content?.buttons?.length);
+    const isProducts = Boolean(content?.products?.sections?.length);
     const text = isTemplate ? "" : String(content?.text || "").trim();
     if (!isTemplate && !text) throw Object.assign(new Error("Message text is required"), { status: 400 });
 
@@ -29,10 +31,10 @@ export async function queueOutbound({ tenantId, session: outer }, { conversation
           conversationId: conversation._id,
           contactId: contact._id,
           direction: "out",
-          type: isTemplate ? "template" : isButtons ? "interactive" : "text",
+          type: isTemplate ? "template" : isProducts ? "products" : isButtons ? "interactive" : "text",
           text,
           template: isTemplate ? content.template : null,
-          data: isButtons ? { buttons: content.buttons } : null,
+          data: isProducts ? { products: content.products } : isButtons ? { buttons: content.buttons } : null,
           status: "queued",
           purpose: content.purpose || "chat",
           orderId: content.orderId || null,

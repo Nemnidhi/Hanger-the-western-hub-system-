@@ -35,8 +35,12 @@ const contactSchema = new mongoose.Schema(
       pincode: { type: String, default: "" },
     },
     // Fit profile (the stylist builds on this): usual size and notes in the customer's own words.
+    // Outfit picks sent on WhatsApp: when the last ones went (automatic picks keep a gap).
+    picks: { lastSentAt: { type: Date, default: null } },
     fit: {
       usualSize: { type: String, default: "", uppercase: true, trim: true, maxlength: 12 },
+      // Waist size for jeans and trousers (26, 28...), when it is known.
+      waist: { type: String, default: "", trim: true, maxlength: 4 },
       notes: { type: String, default: "", maxlength: 300 },
     },
   },
