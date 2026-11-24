@@ -32,6 +32,10 @@ const schema = z.object({
   WEB_DIST_DIR: optional(z.string()),
   // The brand's website, used for product links in the Meta catalogue (e.g. https://thehanger.in).
   PUBLIC_STORE_URL: optional(z.url()),
+  // This server's own public address (product photos are served from it, and Meta fetches them).
+  PUBLIC_BASE_URL: optional(z.url()),
+  // Where uploaded product photos are kept.
+  UPLOAD_DIR: z.string().default("../.data/uploads"),
 
   // Payment gateway: Razorpay on the brand's own account. Without these, cash on delivery only.
   RAZORPAY_KEY_ID: optional(z.string()),

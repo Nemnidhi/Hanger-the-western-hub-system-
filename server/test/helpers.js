@@ -1,4 +1,6 @@
 import http from "node:http";
+import os from "node:os";
+import path from "node:path";
 import { createHmac } from "node:crypto";
 import mongoose from "mongoose";
 import { loadConfig } from "../src/config.js";
@@ -21,6 +23,7 @@ export function testConfig(overrides = {}) {
     WHATSAPP_PHONE_NUMBER_ID: "1234567890",
     DATA_ENCRYPTION_KEY: "0".repeat(64),
     PUBLIC_STORE_URL: "https://store.hanger.test",
+    UPLOAD_DIR: path.join(os.tmpdir(), "hanger-test-uploads"),
     ...overrides,
   });
 }

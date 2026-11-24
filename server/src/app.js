@@ -13,6 +13,7 @@ import { createUsersRouter } from "./routes/users.js";
 import { createInboxRouter } from "./routes/inbox.js";
 import { createRealtimeHub } from "./realtime/hub.js";
 import { createCommerceRouter } from "./routes/commerce.js";
+import { createUploadsRouter } from "./routes/uploads.js";
 import { createRazorpayWebhookRouter } from "./payments/handlers.js";
 
 // Jobs waiting longer than this mean the worker is down or stuck: the readiness check fails so the
@@ -52,6 +53,10 @@ export function createApp({ config, logger, fetchImpl, services = createServices
 
   const realtime = createRealtimeHub({ tenantId: config.TENANT_ID, logger });
   app.locals.realtime = realtime;
+
+  // Photos are read as raw bytes; mounted before the JSON parser. Changes still need the app header.
+  app.use("/api/uploads", requireAppHeader);
+  app.use(createUploadsRouter({ config }));
 
   app.use("/api", express.json({ limit: "1mb" }));
   app.use("/api", requireAppHeader);

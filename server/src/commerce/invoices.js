@@ -8,6 +8,13 @@ const httpError = (status, message, code) => Object.assign(new Error(message), {
  * The place of supply. Goods sent to the customer: the delivery state. Sold over the counter: the
  * store's own state.
  */
+/** The delivery address with its pincode, which the customer has usually typed already. */
+function buyerAddress(shipTo = {}) {
+  const address = String(shipTo.address || "").trim();
+  const pincode = String(shipTo.pincode || "");
+  return pincode && !address.includes(pincode) ? [address, pincode].filter(Boolean).join(", ") : address;
+}
+
 export function placeOfSupply(order, settings) {
   if (order.channel === "store") return { stateCode: settings.stateCode, state: GST_STATES[settings.stateCode] || "" };
   if (!order.shipTo?.stateCode || order.shipTo.stateSure === false) return null;
@@ -55,7 +62,7 @@ export async function issueInvoice({ tenantId, order, settings, kind = "invoice"
         locationId: location._id,
         againstInvoiceId: original?._id || null,
         seller: { legalName: settings.legalName || settings.brandName, gstin: settings.gstin, address: location.address || settings.registeredAddress, stateCode: settings.stateCode },
-        buyer: { name: order.shipTo?.name || order.customer?.name || "", address: order.channel === "store" ? "" : [order.shipTo?.address, order.shipTo?.pincode].filter(Boolean).join(", ") },
+        buyer: { name: order.shipTo?.name || order.customer?.name || "", address: order.channel === "store" ? "" : buyerAddress(order.shipTo) },
         placeOfSupply: pos,
         interState,
         lines,

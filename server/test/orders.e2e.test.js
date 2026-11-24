@@ -304,3 +304,42 @@ test("catalogue API: a style with sizes, stock received, cannot go live without 
   const duplicate = await api("/api/styles", { method: "POST", body: { code: "TOP-014", name: "Again", category: "tops", price: 999, sizes: ["M"] } });
   assert.equal(duplicate.status, 409);
 });
+
+test("staff app API: order search and filters, the day's summary, photo uploads, the invoice address", async () => {
+  await seed();
+  await cart("919800000009");
+  await say("919800000009", INDORE);
+  await tap("919800000009", "pay_cod");
+  const api = await ownerApi();
+
+  const byNumber = await api("/api/orders?q=HWH-1");
+  assert.equal(byNumber.data.orders.length, 1);
+  assert.equal(byNumber.data.prefix, "HWH");
+  assert.equal((await api("/api/orders?q=00009")).data.orders.length, 1, "found by the end of the phone number");
+  assert.equal((await api("/api/orders?status=to_ship")).data.orders.length, 1);
+  assert.equal((await api("/api/orders?status=open")).data.orders.length, 0);
+  const order = byNumber.data.orders[0];
+  assert.equal((await api(`/api/orders?conversationId=${order.conversationId}`)).data.orders.length, 1);
+  assert.equal((await api("/api/orders/not-an-id")).status, 404);
+  assert.equal((await api("/api/orders?q=%5E.*%24")).status, 200, "search text is never a pattern");
+
+  const summary = await api("/api/summary");
+  assert.equal(summary.status, 200);
+  assert.equal(summary.data.byStatus.confirmed, 1);
+  assert.equal(summary.data.today.onlinePaise, 199900);
+
+  const invoice = await Invoice.findOne({ orderId: order._id });
+  assert.equal(invoice.buyer.address.match(/452010/g).length, 1, "the pincode is not repeated");
+
+  const png = Buffer.from("89504e470d0a1a0a0000000d4948445200000001000000010806000000", "hex");
+  const upload = await fetch(`${baseUrl}/api/uploads`, { method: "POST", headers: { "content-type": "image/png", "x-hanger-app": "1", cookie: api.cookie() }, body: png });
+  assert.equal(upload.status, 201);
+  const { url } = await upload.json();
+  const served = await fetch(url);
+  assert.equal(served.status, 200);
+  assert.equal(served.headers.get("content-type"), "image/png");
+  const notImage = await fetch(`${baseUrl}/api/uploads`, { method: "POST", headers: { "content-type": "image/png", "x-hanger-app": "1", cookie: api.cookie() }, body: "<script>" });
+  assert.equal(notImage.status, 400);
+  const signedOut = await fetch(`${baseUrl}/api/uploads`, { method: "POST", headers: { "content-type": "image/png", "x-hanger-app": "1" }, body: png });
+  assert.equal(signedOut.status, 401);
+});

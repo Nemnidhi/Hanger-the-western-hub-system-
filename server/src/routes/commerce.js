@@ -45,6 +45,8 @@ const toStyleData = ({ price, cost, ...rest }) => ({ ...rest, ...(price !== unde
 export function createCommerceRouter({ config, services }) {
   const router = express.Router();
   const tenantId = config.TENANT_ID;
+  // A malformed id is "not found", never a database cast error.
+  router.param("id", (req, res, next, value) => (mongoose.isValidObjectId(value) ? next() : next(httpError(404, "Not found", "NOT_FOUND"))));
   const razorpayReady = Boolean(services?.razorpay);
 
   async function skusByCode(codes, session) {
@@ -187,11 +189,56 @@ export function createCommerceRouter({ config, services }) {
   }));
 
   // ---- Orders ------------------------------------------------------------------------------------
+  // Filters: status (one, or "open" / "to_ship" / "done"), channel, conversationId, q (order number,
+  // phone or name).
+  const STATUS_GROUPS = {
+    open: ["draft", "awaiting_payment", "awaiting_confirmation"],
+    to_ship: ["confirmed", "packed"],
+    done: ["shipped", "delivered", "rto", "returned", "cancelled"],
+  };
   router.get("/api/orders", requireAuth(), requirePermission("orders:read"), route(async (req, res) => {
     const filter = { tenantId };
-    if (ORDER_STATUSES.includes(req.query.status)) filter.status = req.query.status;
+    const status = String(req.query.status || "");
+    if (ORDER_STATUSES.includes(status)) filter.status = status;
+    else if (STATUS_GROUPS[status]) filter.status = mongoose.trusted({ $in: STATUS_GROUPS[status] });
     if (["whatsapp", "website", "store", "phone", "marketplace"].includes(req.query.channel)) filter.channel = req.query.channel;
-    res.json({ orders: await Order.find(filter).sort({ createdAt: -1 }).limit(200).select("-history").lean() });
+    if (mongoose.isValidObjectId(req.query.conversationId)) filter.conversationId = req.query.conversationId;
+    const q = String(req.query.q || "").trim().slice(0, 60);
+    if (q) {
+      const number = Number(q.replace(/^[A-Za-z]+-?/, ""));
+      const digits = q.replace(/\D/g, "");
+      const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const or = [{ "customer.name": mongoose.trusted({ $regex: escaped, $options: "i" }) }, { "shipTo.name": mongoose.trusted({ $regex: escaped, $options: "i" }) }];
+      if (Number.isInteger(number) && number > 0) or.push({ number });
+      if (digits.length >= 4) or.push({ "customer.phone": mongoose.trusted({ $regex: `${digits}$` }) });
+      filter.$or = mongoose.trusted(or);
+    }
+    const settings = await getSettings(tenantId);
+    res.json({ prefix: settings.orderPrefix, orders: await Order.find(filter).sort({ createdAt: -1 }).limit(200).select("-history").lean() });
+  }));
+
+  // The day at a glance: what needs doing, and today's sales (invoices less credit notes, India time).
+  router.get("/api/summary", requireAuth(), requirePermission("orders:read"), route(async (req, res) => {
+    const istMidnight = new Date(Math.floor((Date.now() + 330 * 60_000) / 86_400_000) * 86_400_000 - 330 * 60_000);
+    const counts = await Order.aggregate([{ $match: { tenantId } }, { $group: { _id: "$status", n: { $sum: 1 } } }]);
+    const byStatus = Object.fromEntries(counts.map((row) => [row._id, row.n]));
+    const sales = await Invoice.aggregate([
+      { $match: { tenantId, date: mongoose.trusted({ $gte: istMidnight }) } },
+      { $lookup: { from: "orders", localField: "orderId", foreignField: "_id", as: "order" } },
+      { $group: { _id: { kind: "$kind", channel: { $first: "$order.channel" } }, totalPaise: { $sum: "$totals.totalPaise" }, n: { $sum: 1 } } },
+    ]);
+    const today = { storePaise: 0, onlinePaise: 0, returnsPaise: 0, invoices: 0 };
+    for (const row of sales) {
+      if (row._id.kind === "credit_note") today.returnsPaise += row.totalPaise;
+      else {
+        today.invoices += row.n;
+        if (row._id.channel === "store") today.storePaise += row.totalPaise;
+        else today.onlinePaise += row.totalPaise;
+      }
+    }
+    const lowStock = await StockLevel.countDocuments({ tenantId, onHand: mongoose.trusted({ $gt: 0 }), available: mongoose.trusted({ $lte: 1 }) });
+    const needsState = await Order.countDocuments({ tenantId, status: "confirmed", invoiceId: null });
+    res.json({ byStatus, today, lowStock, needsState, prefix: (await getSettings(tenantId)).orderPrefix });
   }));
 
   router.get("/api/orders/:id", requireAuth(), requirePermission("orders:read"), route(async (req, res) => {

@@ -1,7 +1,7 @@
 # The Hanger platform
 
 The Hanger Western Hub's own commerce system, built in-house, with Meta (WhatsApp, Instagram, the
-commerce catalogue) used directly as tech partner. No Shopify. This is phase 1: the server.
+commerce catalogue) used directly as tech partner. No Shopify. Phase 1: the server and the staff web app.
 
 ## What works now
 
@@ -24,9 +24,28 @@ commerce catalogue) used directly as tech partner. No Shopify. This is phase 1: 
 - **Staff sign-in**: roles owner / manager / staff / packer; two-step login required for owner and manager.
 - The shared WhatsApp inbox, delivery reports, retries and SMS backup (from the platform core).
 
+## Staff web app (`web/`)
+
+React + Vite, served by the API in production (`WEB_DIST_DIR`). Screens by role:
+
+- **Today**: sales today (store / online / returns), what is waiting (COD to confirm, to pack, to ship,
+  on the way, carts), last-piece sizes.
+- **Chats**: the shared WhatsApp inbox, with each chat's order.
+- **Orders**: list by what needs doing, search by number / phone / name; the order page shows the next
+  step (confirm COD, set the GST state, print invoice, pack, add tracking, delivered / RTO / returned,
+  cancel), items with GST rate, customer, the COD risk score with its reasons, invoices and history.
+- **Counter**: billing at the store; scan a barcode (or type a size code / name), UPI / cash / card,
+  print the invoice.
+- **Catalogue**: styles with photos (uploaded from phone or computer), sizes and stock at each
+  location; add / edit, put live, archive, barcodes per size.
+- **Stock**: receive from a supplier by scanning, count with a reason, move between locations, history.
+- **Invoice**: printable GST invoice / credit note (A4 or 80 mm counter printer), amount in words.
+- **Settings** (owner): business and GST details, COD bands, locations, suppliers. Plus Templates,
+  Team and My account.
+
 ## Not yet
 
-Staff web app (screens), website storefront, courier booking and tracking, Instagram DMs, WhatsApp Flows,
+Website storefront, courier booking and tracking, Instagram DMs, WhatsApp Flows,
 reports, the stylist and buying tools (see the plan doc, "Future system").
 
 ## Run it
@@ -40,8 +59,17 @@ mongosh --port 27027 --eval "rs.initiate()"
 
 ```
 npm install
-npm test                         # 35 tests on a real replica set
+npm test                         # 36 tests on a real replica set
 node server/src/scripts/demo.js  # one WhatsApp order start to finish, printed
+```
+
+Demo shop for a local look (wipes a database named *dev* / *demo* only):
+
+```
+node server/src/scripts/seedDemo.js   # prints the demo sign-ins
+npm run build                          # staff app into web/dist
+server\dev.bat                         # http://localhost:4200
+node server/src/scripts/demoCode.js    # the demo owner's two-step code
 ```
 
 Copy `server/.env.example` to `server/.env`, fill in the brand's Meta, Razorpay and key settings, then
@@ -59,6 +87,7 @@ All under `/api`, signed-in, with the `x-hanger-app: 1` header on changes.
 | `GET /orders`, `GET /orders/:id` | orders with their invoices |
 | `POST /orders/:id/{confirm,cancel,payment-choice,state,pack,ship,deliver,rto,return}` | order steps |
 | `POST /store-sales` | counter sale |
-| `GET /invoices/:id`, `GET/PATCH /settings` | |
+| `GET /invoices/:id`, `GET/PATCH /settings`, `GET /summary` | |
+| `POST /uploads` (image body) | product photo, served at `/media/...` |
 
 Webhooks: `/webhooks/whatsapp` (Meta, signed), `/webhooks/razorpay` (signed).
