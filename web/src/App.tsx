@@ -8,6 +8,7 @@ import { Orders } from "./pages/Orders";
 import { Counter } from "./pages/Counter";
 import { TrialRoom } from "./pages/TrialRoom";
 import { Catalogue } from "./pages/Catalogue";
+import { Studio } from "./pages/Studio";
 import { Stock } from "./pages/Stock";
 import { Templates } from "./pages/Templates";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -15,8 +16,8 @@ import { Team } from "./pages/Team";
 import { Account } from "./pages/Account";
 import { InvoicePrint } from "./pages/InvoicePrint";
 
-type Page = "today" | "inbox" | "orders" | "counter" | "trial" | "catalogue" | "stock" | "templates" | "settings" | "team" | "account";
-const PAGES: Page[] = ["today", "inbox", "orders", "counter", "trial", "catalogue", "stock", "templates", "settings", "team", "account"];
+type Page = "today" | "inbox" | "orders" | "counter" | "trial" | "catalogue" | "studio" | "stock" | "templates" | "settings" | "team" | "account";
+const PAGES: Page[] = ["today", "inbox", "orders", "counter", "trial", "catalogue", "studio", "stock", "templates", "settings", "team", "account"];
 
 function readHash(): { page: Page; invoiceId: string } {
   const [first, second] = window.location.hash.replace(/^#\/?/, "").split("/");
@@ -69,6 +70,7 @@ export function App() {
     { id: "counter", label: "Counter", show: can(me, "orders:write") },
     { id: "trial", label: "Trial room", show: can(me, "catalog:read") },
     { id: "catalogue", label: "Catalogue", show: can(me, "catalog:read") },
+    { id: "studio", label: "Photo studio", show: can(me, "catalog:write") || can(me, "studio:use") },
     { id: "stock", label: "Stock", show: can(me, "stock:read") },
     { id: "templates", label: "Templates", show: can(me, "templates:read") },
     { id: "settings", label: "Settings", show: can(me, "settings:read") },
@@ -106,6 +108,7 @@ export function App() {
         {current === "counter" && <Counter />}
         {current === "trial" && <TrialRoom me={me} />}
         {current === "catalogue" && <Catalogue me={me} />}
+        {current === "studio" && <Studio me={me} />}
         {current === "stock" && <Stock me={me} />}
         {current === "templates" && <Templates me={me} />}
         {current === "settings" && <SettingsPage me={me} />}

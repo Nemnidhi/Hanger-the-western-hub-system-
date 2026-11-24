@@ -6,6 +6,7 @@ import { createMetaCatalogHandlers } from "./commerce/metaCatalog.js";
 import { createSmsHandlers } from "./sms/handlers.js";
 import { createShippingHandlers } from "./shipping/courier.js";
 import { createPicksHandlers } from "./commerce/picksSend.js";
+import { createStudioHandlers } from "./studio/studio.js";
 import { Order } from "./models/index.js";
 import { withTransaction } from "./db.js";
 import { expireHold } from "./commerce/orders.js";
@@ -22,6 +23,7 @@ export function createHandlers({ config, now = () => new Date(), services = crea
     ...createSmsHandlers({ sms, now }),
     ...createShippingHandlers({ config, courier, now }),
     ...createPicksHandlers({ config, now }),
+    ...createStudioHandlers({ config, services }),
     // A held cart that was not paid / confirmed / given an address in time gives its stock back.
     async "order.holdExpiry"({ orderId }) {
       await withTransaction(async (session) => {

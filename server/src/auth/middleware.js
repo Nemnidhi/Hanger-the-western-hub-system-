@@ -43,9 +43,10 @@ export function requireAuth({ allowIncomplete = false } = {}) {
   };
 }
 
-export function requirePermission(permission) {
+/** Allows the request when the role has any one of the permissions given. */
+export function requirePermission(...permissions) {
   return (req, res, next) => {
-    if (!req.user || !can(req.user.role, permission)) return next(httpError(403, "FORBIDDEN", "Your role cannot do this."));
+    if (!req.user || !permissions.some((permission) => can(req.user.role, permission))) return next(httpError(403, "FORBIDDEN", "Your role cannot do this."));
     return next();
   };
 }

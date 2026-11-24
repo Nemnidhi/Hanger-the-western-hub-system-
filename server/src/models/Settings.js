@@ -63,6 +63,13 @@ const settingsSchema = new mongoose.Schema(
       // (blanks: first name, the piece they looked at, the picks in one line).
       template: { name: { type: String, default: "" }, language: { type: String, default: "en" } },
     },
+    // Photo studio: the backdrop colour of the brand photos (hex, no #), notes on the brand's voice for
+    // the write-ups, and hashtags every Instagram caption carries (without the #).
+    studio: {
+      backdrop: { type: String, default: "F4ECE6", match: /^[0-9A-Fa-f]{6}$/ },
+      voice: { type: String, default: "", maxlength: 600 },
+      hashtags: { type: [String], default: ["TheHangerIndore", "IndoreFashion", "WesternWear"] },
+    },
     // Approved Utility template for order updates outside WhatsApp's 24-hour window
     // (blanks: first name, order number, status words).
     templates: {

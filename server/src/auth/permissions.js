@@ -2,6 +2,8 @@
 // Owner: everything, including settings, prices and the team.
 // Manager: runs the day - chats, orders, catalogue, stock, reports.
 // Staff (store): chats, orders and store billing; can see the catalogue and stock but not change them.
+// The photo studio (studio:use): staff photograph new pieces and put the result on a new draft style;
+// changing a style that already exists stays with catalog:write.
 // Packer: sees confirmed orders and marks them packed and shipped.
 export const ROLES = ["owner", "manager", "staff", "packer"];
 
@@ -10,10 +12,10 @@ const PERMISSIONS = {
   manager: [
     "inbox:read", "inbox:write", "templates:read",
     "orders:read", "orders:write", "orders:fulfil",
-    "catalog:read", "catalog:write", "stock:read", "stock:write",
+    "catalog:read", "catalog:write", "stock:read", "stock:write", "studio:use",
     "reports:read", "settings:read",
   ],
-  staff: ["inbox:read", "inbox:write", "templates:read", "orders:read", "orders:write", "catalog:read", "stock:read", "settings:read"],
+  staff: ["inbox:read", "inbox:write", "templates:read", "orders:read", "orders:write", "catalog:read", "stock:read", "studio:use", "settings:read"],
   packer: ["orders:read", "orders:fulfil", "catalog:read", "stock:read"],
 };
 

@@ -37,6 +37,10 @@ const styleFields = {
   outfitPart: z.enum(["", "dress", "top", "bottom", "layer", "other"]).optional(),
   sizing: z.enum(["true", "runs_small", "runs_large"]).optional(),
   pairsWith: z.array(z.string().trim().toUpperCase().regex(/^[A-Z0-9][A-Z0-9-]{2,23}$/, "a style code")).max(12).optional(),
+  // From the photo studio, editable in the catalogue.
+  highlights: z.array(z.string().trim().max(80)).max(6).optional(),
+  imageAlt: z.string().max(300).optional(),
+  social: z.object({ instagramCaption: z.string().max(2200), hashtags: z.array(z.string().trim().regex(/^#?[\p{L}\p{N}_]{1,60}$/u, "a hashtag without spaces").transform((value) => value.replace(/^#/, ""))).max(30) }).optional(),
   images: z.array(z.url()).max(20).optional(),
   price: rupeesToPaise,
   cost: z.number().min(0).max(10_000_000).transform((rupees) => Math.round(rupees * 100)).optional(),
@@ -367,6 +371,13 @@ export function createCommerceRouter({ config, services }) {
             autoSendDelayMinutes: z.number().int().min(10).max(1440).optional(),
             minGapDays: z.number().int().min(1).max(60).optional(),
             template: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional(),
+          })
+          .optional(),
+        studio: z
+          .object({
+            backdrop: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).transform((value) => value.replace("#", "").toUpperCase()).optional(),
+            voice: z.string().max(600).optional(),
+            hashtags: z.array(z.string().trim().regex(/^#?[\p{L}\p{N}_]{1,60}$/u, "a hashtag without spaces").transform((value) => value.replace(/^#/, ""))).max(10).optional(),
           })
           .optional(),
         templates: z.object({ orderUpdate: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional() }).optional(),

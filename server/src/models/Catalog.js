@@ -60,6 +60,14 @@ const styleSchema = new mongoose.Schema(
     sizing: { type: String, enum: ["true", "runs_small", "runs_large"], default: "true" },
     pairsWith: { type: [String], default: [] },
     images: { type: [String], default: [] },
+    // From the photo studio (staff can edit): short selling points, the photo's alt text for the
+    // website, and the Instagram caption with its hashtags (without the #).
+    highlights: { type: [String], default: [] },
+    imageAlt: { type: String, default: "", maxlength: 300 },
+    social: {
+      instagramCaption: { type: String, default: "", maxlength: 2200 },
+      hashtags: { type: [String], default: [] },
+    },
     // Selling price per piece, GST-inclusive, in paise. Cost is what the boutique paid the supplier.
     pricePaise: { type: Number, required: true, min: 100 },
     costPaise: { type: Number, default: 0, min: 0 },

@@ -25,7 +25,7 @@ export function createUploadsRouter({ config }) {
   router.post(
     "/api/uploads",
     requireAuth(),
-    requirePermission("catalog:write"),
+    requirePermission("catalog:write", "studio:use"),
     express.raw({ type: ["image/jpeg", "image/png", "image/webp"], limit: MAX_BYTES }),
     route(async (req, res) => {
       const body = Buffer.isBuffer(req.body) ? req.body : Buffer.alloc(0);

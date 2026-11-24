@@ -37,6 +37,16 @@ commerce catalogue) used directly as tech partner. No Shopify. Phase 1: the serv
   which she can put in a cart. Outside it: the owner's approved picks template, else a clear refusal.
   Automatic picks after a website look (delay and a once-in-N-days gap) are built and off by default;
   they start working when the website storefront calls `schedulePicksFollowUp` (not built yet).
+- **Photo studio**: staff photograph a new piece (a hanger or a flat surface is fine, up to 4 angles;
+  the phone shrinks them before upload). Photoroom, on the brand's own account, makes a clean white
+  photo and one on the brand's backdrop colour, and on request an AI "on a model" or ghost-mannequin
+  photo (marked AI: staff check it matches the real piece). Claude writes the name, website
+  description, selling points, Instagram caption with hashtags, alt text and attributes from the
+  photos and the staff notes, describing only what the photos show, with a "check before it goes
+  out" list (fabric, anything unsure); staff must tick it. Staff pick the photos and edit the words,
+  then make a new draft style (store staff) or update an existing style (manager / owner). Each part
+  is its own job, retried when a service is busy; failed parts can be run again. Instagram posting
+  itself is not built: staff copy the caption.
 - **Meta catalogue sync**: stock and price changes reach WhatsApp / Instagram within about 5 minutes.
 - **Staff sign-in**: roles owner / manager / staff / packer; two-step login required for owner and manager.
 - The shared WhatsApp inbox, delivery reports, retries and SMS backup (from the platform core).
@@ -59,16 +69,18 @@ React + Vite, served by the API in production (`WEB_DIST_DIR`). Screens by role:
 - **Catalogue**: styles with photos (uploaded from phone or computer), sizes and stock at each
   location; add / edit, put live, archive, barcodes per size; for picks, the part of an outfit, how
   the sizes run, and the styles it goes with.
+- **Photo studio**: add photos, notes and the extra AI photos wanted; see the photos being made,
+  tick the ones to use in order, edit the write-up, copy the caption, apply. Store staff can use it.
 - **Stock**: receive from a supplier by scanning, count with a reason, move between locations, history.
 - **Invoice**: printable GST invoice / credit note (A4 or 80 mm counter printer), amount in words.
 - **Settings** (owner): business and GST details, COD bands, shipping (Shiprocket pickup address,
   usual parcel weight and box), outfit picks (weights, new / slow days, picks template, automatic
-  picks), locations, suppliers. Plus Templates,
+  picks), photo studio (backdrop colour, voice, shop hashtags), locations, suppliers. Plus Templates,
   Team and My account.
 
 ## Not yet
 
-Website storefront, Instagram DMs, WhatsApp Flows,
+Website storefront, Instagram DMs and posting to Instagram, WhatsApp Flows,
 reports, the stylist and buying tools (see the plan doc, "Future system").
 
 ## Run it
@@ -116,6 +128,9 @@ All under `/api`, signed-in, with the `x-hanger-app: 1` header on changes.
 | `POST /picks/send` `{phone, pieces, styleCodes?, consentNow?}`, `POST /customers/sizes` | send picks to her WhatsApp; save her sizes |
 | `GET /invoices/:id`, `GET/PATCH /settings`, `GET /summary` | |
 | `POST /uploads` (image body) | product photo, served at `/media/...` |
+| `GET /studio/status`, `GET /studio/jobs`, `GET /studio/jobs/:id` | photo studio: what is connected, recent pieces |
+| `POST /studio/jobs` `{images, notes?, styleId?, extras: {model, ghost}}`, `POST /studio/jobs/:id/retry` | start a piece; run failed parts again |
+| `POST /studio/jobs/:id/apply` `{styleId \| newStyle: {code, sizes, price}, images, name?, description?, highlights?, instagramCaption?, hashtags?, altText?, attributes?}` | put the checked result on a style |
 
 Webhooks: `/webhooks/whatsapp` (Meta, signed), `/webhooks/razorpay` (signed),
 `/webhooks/courier-updates` (Shiprocket tracking, `x-api-key` token; the URL must not contain
@@ -128,6 +143,17 @@ with three body blanks: her first name, the piece she looked at, and the picks l
 `Hi {{1}}! These go with the {{2}} you tried: {{3}}. Reply with the ones you'd like and we'll keep
 them aside.` Put its name and language in Settings > Outfit picks. The product list (inside 24 hours)
 needs `META_CATALOG_ID` and the catalogue synced; without it, picks go as a plain text list.
+
+### Photo studio set-up
+
+- **Photos**: a Photoroom account on the brand's name (API plan), key in `PHOTOROOM_API_KEY`. Each
+  photo made is one paid call; the AI model / ghost-mannequin photos cost more and are only made when
+  staff tick them.
+- **Write-ups**: an Anthropic API key on the brand's account in `ANTHROPIC_API_KEY`
+  (`STUDIO_COPY_MODEL`, default `claude-opus-5-5`). One call per piece.
+- Without a key, that part shows "not connected" and the rest still works. For a demo,
+  `STUDIO_STAND_IN=true` returns the photo unchanged and a template write-up (refused in production).
+- Photos are read only from the shop's own `/media` uploads; nothing else is fetched.
 
 ### Shiprocket set-up
 

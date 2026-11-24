@@ -13,3 +13,4 @@ export { Alert, DailySummary } from "./Alert.js";
 export { Location, Supplier, Style, Sku, StockLevel, StockMove } from "./Catalog.js";
 export { Order, ORDER_STATUSES, OPEN_STATUSES, orderLabel } from "./Order.js";
 export { Invoice } from "./Invoice.js";
+export { StudioJob, STUDIO_KINDS } from "./Studio.js";

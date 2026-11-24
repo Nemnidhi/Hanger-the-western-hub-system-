@@ -50,6 +50,17 @@ const schema = z.object({
   MSG91_TEMPLATE_DELIVERY_CODE: optional(z.string().min(4)),
   MSG91_API_BASE: z.url().default("https://control.msg91.com"),
 
+  // Photo studio. Write-ups by Claude (Anthropic API key on the brand's own account); product
+  // photos (clean background, shadow, AI model / ghost mannequin) by Photoroom's image editing API.
+  // Either can be left empty: that part of the studio says it is not connected.
+  ANTHROPIC_API_KEY: optional(z.string().min(20)),
+  STUDIO_COPY_MODEL: z.string().default("claude-opus-5-5"),
+  PHOTOROOM_API_KEY: optional(z.string().min(10)),
+  PHOTOROOM_API_BASE: z.url().default("https://image-api.photoroom.com"),
+  // Development and tests only: a local stand-in that returns the photo as it is and a template
+  // write-up, so the studio can be tried without either account. Refused in production.
+  STUDIO_STAND_IN: z.preprocess((value) => value === "true" || value === true, z.boolean()).default(false),
+
   // Courier booking through Shiprocket, on the brand's own Shiprocket account. Use a separate API
   // user (Shiprocket > Settings > API), not the main login. "none": tracking numbers are typed in by hand.
   SHIPPING_PROVIDER: z.enum(["none", "shiprocket"]).default("none"),
@@ -62,6 +73,7 @@ const schema = z.object({
 }).superRefine((value, ctx) => {
   const razorpay = [value.RAZORPAY_KEY_ID, value.RAZORPAY_KEY_SECRET, value.RAZORPAY_WEBHOOK_SECRET].filter(Boolean).length;
   if (razorpay && razorpay < 3) ctx.addIssue({ code: "custom", path: ["RAZORPAY_KEY_ID"], message: "Set all three Razorpay settings, or none" });
+  if (value.STUDIO_STAND_IN && value.NODE_ENV === "production") ctx.addIssue({ code: "custom", path: ["STUDIO_STAND_IN"], message: "STUDIO_STAND_IN is for development only" });
   if (value.SHIPPING_PROVIDER === "shiprocket") {
     for (const name of ["SHIPROCKET_EMAIL", "SHIPROCKET_PASSWORD", "SHIPROCKET_WEBHOOK_TOKEN"]) {
       if (!value[name]) ctx.addIssue({ code: "custom", path: [name], message: `${name} is required for SHIPPING_PROVIDER=shiprocket` });

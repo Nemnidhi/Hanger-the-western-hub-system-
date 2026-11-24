@@ -15,6 +15,7 @@ export function SettingsPage({ me }: { me: Me }) {
       {loaded.data && locations.data && <BusinessForm settings={loaded.data.settings} paymentsReady={loaded.data.paymentsReady} locations={locations.data.locations} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <ShippingForm settings={loaded.data.settings} courierReady={loaded.data.courierReady} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <PicksForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <StudioForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       <Locations canWrite={canWrite} onlineCode={loaded.data?.settings.onlineLocationCode || ""} list={locations} />
       <Suppliers canWrite={can(me, "catalog:write")} />
     </div>
@@ -313,6 +314,55 @@ function PicksForm({ settings, canWrite, onSaved }: { settings: Settings; canWri
       {canWrite && (
         <button className="btn primary" disabled={busy}>
           Save outfit picks
+        </button>
+      )}
+    </form>
+  );
+}
+
+/** Photo studio: the brand backdrop colour, the voice for write-ups, and the shop's own hashtags. */
+function StudioForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const initial = () => ({ backdrop: `#${settings.studio?.backdrop || "F4ECE6"}`, voice: settings.studio?.voice || "", hashtags: (settings.studio?.hashtags || ["TheHangerIndore", "IndoreFashion", "WesternWear"]).map((tag) => `#${tag}`).join(" ") });
+  const [form, setForm] = useState(initial);
+  useEffect(() => setForm(initial()), [settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const save = () =>
+    run(async () => {
+      const hashtags = form.hashtags.split(/[\s,]+/).map((tag) => tag.replace(/^#/, "")).filter(Boolean);
+      if (hashtags.length > 10) throw new Error("Keep the shop's own hashtags to 10 or fewer; the write-up adds the rest.");
+      await api("/api/settings", { method: "PATCH", body: { studio: { backdrop: form.backdrop, voice: form.voice.trim(), hashtags } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>Photo studio</h2>
+      <p className="muted small-text">Used for every new piece in the photo studio: the colour behind the brand photos, how the write-ups should sound, and hashtags every Instagram caption carries.</p>
+      <fieldset disabled={!canWrite}>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="studio-backdrop">Backdrop colour</label>
+            <div className="colour-pick">
+              <input id="studio-backdrop" type="color" value={form.backdrop} onChange={(event) => setForm({ ...form, backdrop: event.target.value })} />
+              <span>{form.backdrop.toUpperCase()}</span>
+            </div>
+          </div>
+          <div className="field span-2">
+            <label htmlFor="studio-tags">Shop hashtags (always added)</label>
+            <input id="studio-tags" className="input" value={form.hashtags} onChange={(event) => setForm({ ...form, hashtags: event.target.value })} />
+          </div>
+          <div className="field span-3">
+            <label htmlFor="studio-voice">Voice for write-ups</label>
+            <textarea id="studio-voice" className="input" rows={2} maxLength={600} value={form.voice} onChange={(event) => setForm({ ...form, voice: event.target.value })} placeholder="Warm and simple, like a friend in the shop. No big words. Mention trial at the Indore store." />
+          </div>
+        </div>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+      {canWrite && (
+        <button className="btn primary" disabled={busy}>
+          Save photo studio
         </button>
       )}
     </form>

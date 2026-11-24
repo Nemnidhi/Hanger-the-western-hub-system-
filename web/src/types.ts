@@ -42,6 +42,9 @@ export interface Style {
   outfitPart?: "" | "dress" | "top" | "bottom" | "layer" | "other";
   sizing?: "true" | "runs_small" | "runs_large";
   pairsWith?: string[];
+  highlights?: string[];
+  imageAlt?: string;
+  social?: { instagramCaption: string; hashtags: string[] };
   sizes: SizeRow[];
 }
 
@@ -163,6 +166,7 @@ export interface Settings {
   templates: { orderUpdate: { name: string; language: string } };
   shipping: { pickupLocation: string; weightGrams: number; lengthCm: number; breadthCm: number; heightCm: number };
   picks?: PickSettings;
+  studio?: { backdrop: string; voice: string; hashtags: string[] };
 }
 
 export type PickPart = "size" | "pair" | "colour" | "occasion" | "taste" | "push";
@@ -277,3 +281,47 @@ export const GST_STATES: Record<string, string> = {
   "31": "Lakshadweep", "32": "Kerala", "33": "Tamil Nadu", "34": "Puducherry", "35": "Andaman and Nicobar Islands",
   "36": "Telangana", "37": "Andhra Pradesh", "38": "Ladakh",
 };
+
+export type StudioKind = "white" | "studio" | "model" | "ghost";
+export type PartStatus = "queued" | "done" | "failed" | "skipped";
+
+export interface StudioCopy {
+  name: string;
+  category: string;
+  outfitPart: string;
+  colour: string;
+  pattern: string;
+  fabricLooksLike: string;
+  neckline: string;
+  sleeve: string;
+  fit: string;
+  occasion: string[];
+  websiteDescription: string;
+  highlights: string[];
+  instagramCaption: string;
+  hashtags: string[];
+  altText: string;
+  toCheck: string[];
+  writtenBy: string;
+}
+
+export interface StudioJob {
+  _id: string;
+  status: "working" | "ready";
+  sources: string[];
+  notes: string;
+  styleId: string | null;
+  outputs: { kind: StudioKind; status: PartStatus; url: string; generated: boolean; error: string }[];
+  copyStatus: PartStatus;
+  copyError: string;
+  copy: StudioCopy | null;
+  appliedTo: string | null;
+  appliedAt: string | null;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface StudioReady {
+  images: string | null;
+  copy: string | null;
+}
