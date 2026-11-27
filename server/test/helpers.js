@@ -133,16 +133,20 @@ export function statusPayload({ phoneNumberId = "1234567890", id, status, errors
 /** A cookie-keeping API client for the staff app's API. */
 export function apiClient(baseUrl) {
   let cookie = "";
+  let shopCookie = "";
   async function api(path, { method = "GET", body, appHeader = true } = {}) {
     const headers = {};
     if (body !== undefined) headers["content-type"] = "application/json";
     if (appHeader) headers["x-hanger-app"] = "1";
-    if (cookie) headers.cookie = cookie;
+    const jar = [cookie, shopCookie].filter(Boolean).join("; ");
+    if (jar) headers.cookie = jar;
     const response = await fetch(`${baseUrl}${path}`, { method, headers, body: body !== undefined ? JSON.stringify(body) : undefined });
     for (const line of response.headers.getSetCookie()) {
       const [pair] = line.split(";");
       const [name, value] = pair.split("=");
       if (name === "hh_session") cookie = value ? `hh_session=${value}` : "";
+      // The website's customer session rides in its own jar.
+      if (name === "hh_shop") shopCookie = value ? `hh_shop=${value}` : "";
     }
     const text = await response.text();
     let data = null;

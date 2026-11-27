@@ -57,6 +57,9 @@ export interface Conversation {
   lastMessageAt: string | null;
   window: { open: boolean; closesAt: string | null };
   lastMessage: { direction: "in" | "out"; type: string; text: string; status: string } | null;
+  // The WhatsApp stylist is quiet in this chat until then (handed over, or turned off), and why.
+  stylistOffUntil?: string | null;
+  stylistNote?: string;
 }
 
 export interface Message {
@@ -68,6 +71,7 @@ export interface Message {
   media: { mimeType: string; caption: string; filename: string } | null;
   location: { latitude: number; longitude: number; name: string; address: string } | null;
   status: string;
+  purpose?: string;
   error: { code: number; text: string; action: string } | null;
   at: string;
   sentAt: string | null;

@@ -22,9 +22,23 @@ export async function connectDb(uri, { logger, buildIndexes = true } = {}) {
     throw new Error("MongoDB must run as a replica set: transactions are required. See README (development replica set).");
   }
   // Build every model's indexes before serving: unique indexes are what make webhook handling idempotent.
+  if (buildIndexes) await migrateIndexes(logger);
   if (buildIndexes) await Promise.all(Object.values(mongoose.models).map((model) => model.init()));
   logger?.info({ replicaSet: hello.setName }, "database connected");
   return mongoose.connection;
+}
+
+/** Indexes replaced by newer ones: dropped once, before the new ones are built. */
+async function migrateIndexes(logger) {
+  const old = [["invoices", "orderId_1_kind_1"]]; // one credit note per order -> one per return (27 Nov 2026)
+  for (const [collection, name] of old) {
+    try {
+      await mongoose.connection.db.collection(collection).dropIndex(name);
+      logger?.info({ collection, index: name }, "old index dropped");
+    } catch (error) {
+      if (![26, 27].includes(error?.code)) throw error; // 26: no collection, 27: no such index
+    }
+  }
 }
 
 export async function disconnectDb() {

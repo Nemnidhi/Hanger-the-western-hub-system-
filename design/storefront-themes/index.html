@@ -1,0 +1,1096 @@
+<title>Hanger Storefront Themes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Gloock&family=Instrument+Serif:ital@0;1&family=Outfit:wght@300;400;500;600;700&family=Bricolage+Grotesque:wght@500;700&family=Manrope:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Jost:wght@400;500;600&family=Bodoni+Moda:ital,wght@0,500;1,500&family=Fraunces:ital,wght@0,500;0,600;1,500&family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700&family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700&family=Unbounded:wght@500;600&family=Space+Grotesk:wght@400;500;600;700&family=Young+Serif&display=swap" rel="stylesheet" />
+<style>
+/* Layout: the four directions in one shop. Story circles open the drop (stories), the drop reads
+   like an issue with look numbers (editorial), every piece opens in the fitting room with the
+   shop's picks beside the mirror, and a staff screen does the same for the real trial room.
+   One light look by choice; the story viewer is dark by design. */
+:root {
+  --wall: #e3e9e4;
+  --wall-2: #d5ded7;
+  --paper: #f8faf7;
+  --ink: #17221e;
+  --mute: #56655e;
+  --line: #cbd6cf;
+  --curtain: #1f3a31;
+  --curtain-2: #2f5649;
+  --brass: #b4853f;
+  --brass-hi: #e3c486;
+  --form: #dccfc2;
+  --flag: #b2405f;
+  --good: #2f7a55;
+  --night: #0c0a0d;
+  --rose: #f0b9a6;
+  --ring: conic-gradient(from 210deg, #d8af6c, #f0b9a6, #a03d66, #d8af6c);
+  --display: "Gloock", "Bodoni 72", Georgia, serif;
+  --story: "Instrument Serif", Georgia, serif;
+  --sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--wall); color: var(--ink); font-family: var(--sans); font-size: 15.5px; line-height: 1.5; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button, select, input { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+svg { display: block; }
+:focus-visible { outline: 2px solid var(--curtain); outline-offset: 3px; }
+.wrap { width: min(1320px, 100% - 32px); margin-inline: auto; }
+.num { font-variant-numeric: tabular-nums; }
+.mute { color: var(--mute); }
+.label { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; }
+
+.preview-band { background: var(--curtain); color: var(--brass-hi); font-size: 12.5px; text-align: center; padding: 8px 16px; line-height: 1.4; }
+.preview-band b { color: var(--paper); letter-spacing: .14em; text-transform: uppercase; font-size: 11px; margin-right: 6px; }
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--curtain); color: var(--paper); }
+header::after { content: ""; position: absolute; left: 0; right: 0; top: 100%; height: 14px; background: repeating-linear-gradient(90deg, var(--curtain) 0 18px, var(--curtain-2) 18px 24px, var(--curtain) 24px 36px); -webkit-mask: radial-gradient(18px 14px at 18px 0, #000 98%, transparent) 0 0 / 36px 14px repeat-x; mask: radial-gradient(18px 14px at 18px 0, #000 98%, transparent) 0 0 / 36px 14px repeat-x; pointer-events: none; }
+header .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 62px; }
+.logo { display: flex; align-items: baseline; gap: 10px; font-family: var(--display); font-size: 26px; white-space: nowrap; }
+.logo small { font-family: var(--sans); font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase; color: var(--brass-hi); }
+nav.main { display: flex; gap: 4px; }
+nav.main a, .bag-btn { padding: 8px 12px; border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; }
+nav.main a.on { background: rgba(255, 255, 255, .12); }
+nav.main a:hover, .bag-btn:hover { background: rgba(255, 255, 255, .08); }
+.bag-n { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; margin-left: 6px; border-radius: 11px; background: var(--brass); color: var(--ink); font-size: 12px; font-weight: 700; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 20px; border-radius: 999px; font-weight: 600; font-size: 15px; border: 1px solid var(--ink); white-space: nowrap; }
+.btn.dark { background: var(--curtain); color: var(--paper); border-color: var(--curtain); }
+.btn.dark:hover { background: var(--ink); }
+.btn.brass { background: var(--brass); border-color: var(--brass); color: var(--ink); }
+.btn.small { padding: 8px 13px; font-size: 13.5px; }
+.btn.block { width: 100%; }
+.pill { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); font-size: 14px; font-weight: 500; }
+.pill.on { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.card { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; padding: 18px; }
+
+/* Home */
+.rings { display: flex; gap: 16px; overflow-x: auto; padding: 30px 0 8px; scrollbar-width: none; }
+.rings::-webkit-scrollbar { display: none; }
+.ring { flex: none; width: 82px; display: grid; justify-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; text-align: center; }
+.ring .o { width: 76px; height: 76px; border-radius: 50%; padding: 3px; background: var(--ring); }
+.ring.seen .o { background: var(--line); }
+.ring .i { width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--wall); overflow: hidden; display: grid; place-items: center; }
+.ring .i svg { width: 122%; height: 122%; margin-top: 20%; }
+.ring .i .glyph { font-family: var(--story); font-size: 28px; color: #2a1018; }
+.hero { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 40px; align-items: center; padding-block: 26px 50px; }
+.hero h1 { font-size: clamp(46px, 6.4vw, 92px); line-height: .95; }
+.hero h1 i { font-family: var(--story); font-style: italic; color: var(--curtain-2); }
+.hero p { font-size: 18px; max-width: 46ch; color: var(--mute); }
+.hero-ctas { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 22px; }
+.hero-art { position: relative; aspect-ratio: 5 / 4; max-width: 100%; border-radius: 30px; overflow: hidden; background: radial-gradient(80% 70% at 50% 35%, #f9fbf8, var(--wall-2)); }
+.hero-art .rod { position: absolute; left: 6%; right: 6%; top: 12%; height: 8px; border-radius: 4px; background: linear-gradient(var(--brass-hi), var(--brass) 60%, #7d5a26); }
+.hero-art .hangs { position: absolute; left: 4%; right: 4%; top: 6%; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); }
+.hero-art .hangs button svg { width: 100%; height: 100%; }
+.hero-art .hint { position: absolute; left: 16px; bottom: 14px; background: var(--paper); border-radius: 999px; padding: 6px 14px; font-size: 13px; }
+.issue-head { display: flex; justify-content: space-between; align-items: end; gap: 16px; flex-wrap: wrap; border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 22px; }
+.issue-head h2 { font-size: clamp(36px, 4.6vw, 64px); line-height: .95; }
+.issue-head h2 i { font-family: var(--story); }
+.filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 26px 18px; padding-bottom: 70px; }
+.look-card .plate { position: relative; aspect-ratio: 3 / 4; max-width: 100%; border-radius: 20px; overflow: hidden; }
+.look-card .plate svg { width: 100%; height: 100%; transition: transform .7s var(--ease); }
+.look-card:hover .plate svg { transform: scale(1.04); }
+.look-card .no { position: absolute; left: 14px; top: 10px; font-family: var(--story); font-style: italic; font-size: 26px; color: var(--ink); }
+.look-card .left { position: absolute; right: 10px; top: 12px; background: var(--paper); color: var(--flag); font-size: 11.5px; font-weight: 600; padding: 4px 9px; border-radius: 999px; }
+.look-card .try { position: absolute; left: 10px; right: 10px; bottom: 10px; text-align: center; background: rgba(248, 250, 247, .92); border-radius: 999px; padding: 8px; font-size: 13px; font-weight: 600; opacity: 0; transform: translateY(6px); transition: .3s var(--ease); }
+.look-card:hover .try, .look-card:focus-visible .try { opacity: 1; transform: none; }
+.look-card .cap { display: flex; justify-content: space-between; gap: 10px; padding: 10px 4px 0; font-size: 14.5px; }
+.look-card .cap b { font-weight: 600; }
+
+/* Fitting room */
+.room { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 36px; padding-block: 40px 60px; align-items: start; }
+.mirror-col { position: sticky; top: 92px; display: grid; gap: 18px; }
+.scene { position: relative; display: grid; place-items: center; padding: 0 10%; }
+.curtain { position: absolute; top: -40px; bottom: 30px; width: 12%; background: repeating-linear-gradient(90deg, var(--curtain) 0 10px, var(--curtain-2) 10px 13px, var(--curtain) 13px 22px); border-radius: 0 0 40% 40%; box-shadow: inset -10px 0 20px rgba(0, 0, 0, .25); }
+.curtain.l { left: 0; border-bottom-right-radius: 70%; }
+.curtain.r { right: 0; border-bottom-left-radius: 70%; transform: scaleX(-1); }
+.mirror { position: relative; width: 100%; max-width: 400px; aspect-ratio: 3 / 4.25; border-radius: 999px 999px 26px 26px / 48% 48% 26px 26px; padding: 12px; background: linear-gradient(150deg, var(--brass-hi), var(--brass) 40%, #7d5a26 70%, var(--brass-hi)); box-shadow: 0 30px 60px -30px rgba(23, 34, 30, .55); }
+.glass { position: relative; width: 100%; height: 100%; border-radius: inherit; overflow: hidden; background: radial-gradient(90% 60% at 50% 30%, #fbfcfa 0%, #e8eee9 55%, #cfd9d2 100%); }
+.glass::before { content: ""; position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .55) 38%, transparent 46%); pointer-events: none; z-index: 5; }
+.glass::after { content: ""; position: absolute; left: 18%; right: 18%; bottom: 4%; height: 5%; border-radius: 50%; background: radial-gradient(rgba(23, 34, 30, .22), transparent 70%); }
+.stack { position: absolute; inset: 7% 4% 3%; z-index: 2; }
+.stack svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stack svg.fresh { animation: drop .55s var(--ease); }
+@keyframes drop { from { opacity: 0; transform: translateY(-14px); } }
+.mirror-tag { position: absolute; left: 50%; bottom: -16px; transform: translateX(-50%); z-index: 6; background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 6px 16px; font-size: 13px; white-space: nowrap; box-shadow: 0 8px 20px -12px rgba(23, 34, 30, .5); }
+.mirror-tag b { font-family: var(--display); font-weight: 400; font-size: 16px; }
+.look-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.look-top h2 { font-size: 28px; }
+.look-total { font-size: 22px; font-weight: 600; }
+.worn-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); }
+.sw { width: 44px; height: 44px; border-radius: 12px; overflow: hidden; }
+.sw svg { width: 100%; height: 100%; }
+.worn-row b { font-weight: 600; font-size: 14.5px; display: block; line-height: 1.2; }
+.worn-row small { color: var(--mute); font-size: 12.5px; }
+.worn-row small.warn { color: var(--flag); font-weight: 600; }
+.sel { border: 1px solid var(--line); border-radius: 10px; padding: 7px 8px; background: var(--paper); font-size: 14px; }
+.x { width: 30px; height: 30px; border-radius: 50%; color: var(--mute); }
+.x:hover { background: var(--wall); color: var(--ink); }
+.look-actions { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; margin-top: 12px; }
+.side-col { display: grid; gap: 18px; min-width: 0; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.tab { padding: 12px 16px; font-weight: 500; color: var(--mute); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+.tab.on { color: var(--ink); border-color: var(--ink); }
+.who { display: grid; gap: 10px; }
+.who-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.history { font-size: 13.5px; color: var(--mute); margin: 0; padding-left: 18px; }
+.example { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--flag); }
+
+/* Picks */
+.picks-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin: 6px 0 10px; }
+.picks-head h3 { font-size: 24px; }
+.pick { display: grid; grid-template-columns: 66px minmax(0, 1fr) auto; gap: 14px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.pick .art { aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; }
+.pick .art svg { width: 100%; height: 100%; }
+.pick b.nm { font-weight: 600; display: block; line-height: 1.25; }
+.pick .sub { font-size: 13px; color: var(--mute); }
+.chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.chip { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--wall); color: var(--ink); }
+.chip.warn { background: #f6e1e6; color: var(--flag); }
+.score { width: 52px; height: 52px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 15px; background: conic-gradient(var(--curtain-2) calc(var(--s) * 1%), var(--wall-2) 0); position: relative; }
+.score::before { content: ""; position: absolute; inset: 5px; border-radius: 50%; background: var(--paper); }
+.score span { position: relative; }
+.pick-btns { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.why { grid-column: 1 / -1; display: grid; gap: 7px; background: var(--wall); border-radius: 14px; padding: 12px 14px; font-size: 13px; }
+.why-row { display: grid; grid-template-columns: 150px 90px minmax(0, 1fr) 34px; gap: 10px; align-items: center; }
+.bar { height: 6px; border-radius: 3px; background: var(--wall-2); overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--curtain-2); }
+.weights { display: grid; gap: 10px; }
+.w-row { display: grid; grid-template-columns: minmax(0, 1fr) 140px 36px; gap: 12px; align-items: center; font-size: 14px; }
+.w-row input { width: 100%; accent-color: var(--curtain); }
+details.how { border-top: 1px solid var(--line); padding-top: 10px; }
+details.how summary { cursor: pointer; font-weight: 600; list-style: none; display: flex; justify-content: space-between; }
+details.how summary::after { content: "+"; font-size: 20px; line-height: 1; }
+details.how[open] summary::after { content: "–"; }
+.about dl { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 0; margin: 12px 0 0; font-size: 14px; border-top: 1px solid var(--ink); }
+.about dt, .about dd { margin: 0; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.about dt { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding-top: 12px; }
+.rail { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.piece { position: relative; text-align: left; }
+.piece .art { aspect-ratio: 3 / 4; max-width: 100%; }
+.piece .art svg { width: 100%; height: 100%; }
+.piece .meta { display: flex; justify-content: space-between; gap: 8px; font-size: 13.5px; }
+.piece .on-tag { position: absolute; left: 6px; top: 26px; background: var(--curtain); color: var(--paper); font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; }
+.rail-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+
+/* Trial room (staff) */
+.trial { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 26px; padding-block: 34px 70px; align-items: start; }
+.trial h1 { font-size: clamp(38px, 4.4vw, 58px); line-height: 1; }
+.staff-tag { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; background: var(--ink); color: var(--paper); padding: 4px 10px; border-radius: 999px; margin-bottom: 10px; }
+.inroom { display: grid; gap: 0; }
+.scan { display: flex; gap: 8px; margin-top: 12px; }
+.scan select { flex: 1; min-width: 0; }
+.fetch { display: grid; grid-template-columns: 56px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); }
+.fetch .art { aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; }
+.fetch .art svg { width: 100%; height: 100%; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--paper); }
+.check.on { background: var(--good); border-color: var(--good); color: #fff; }
+
+/* Panels */
+.scrim { position: fixed; inset: 0; z-index: 50; background: rgba(23, 34, 30, .42); opacity: 0; pointer-events: none; transition: opacity .3s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.panel { position: fixed; z-index: 51; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--paper); transform: translateX(102%); transition: transform .5s var(--ease); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.panel.on { transform: none; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; padding: 20px 22px; border-bottom: 1px solid var(--line); }
+.panel-head h2 { font-size: 30px; }
+.panel-body { flex: 1; overflow: auto; padding: 4px 22px; }
+.panel-foot { padding: 16px 22px 22px; border-top: 1px solid var(--line); display: grid; gap: 6px; }
+.b-row { display: grid; grid-template-columns: 60px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.b-row .art { aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; }
+.b-row .art svg { width: 100%; height: 100%; }
+.qty { display: inline-flex; align-items: center; gap: 10px; margin-top: 4px; }
+.qty button { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--line); }
+.row { display: flex; justify-content: space-between; gap: 10px; font-size: 14.5px; }
+.row.total { font-size: 18px; font-weight: 600; padding-top: 4px; }
+.meter { height: 6px; border-radius: 3px; background: var(--wall-2); overflow: hidden; margin: 2px 0 6px; }
+.meter i { display: block; height: 100%; background: var(--brass); }
+.modal { position: fixed; z-index: 52; left: 50%; top: 50%; width: min(860px, calc(100% - 32px)); max-height: calc(100% - 40px); overflow: auto; background: var(--paper); border-radius: 26px; padding: 24px; transform: translate(-50%, -46%); opacity: 0; pointer-events: none; transition: transform .4s var(--ease), opacity .3s; }
+.modal.on { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+.send { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px; align-items: start; }
+.chat { background: #e9e4dc; border-radius: 22px; padding: 16px; display: grid; gap: 8px; }
+.chat-top { display: flex; align-items: center; gap: 10px; font-size: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(0, 0, 0, .08); }
+.chat-top .av { width: 34px; height: 34px; border-radius: 50%; background: var(--curtain); color: var(--brass-hi); display: grid; place-items: center; font-family: var(--display); }
+.bubble { background: #fff; border-radius: 4px 16px 16px 16px; padding: 10px 12px; font-size: 14px; max-width: 92%; box-shadow: 0 1px 1px rgba(0, 0, 0, .06); }
+.bubble .prods { display: grid; gap: 6px; margin-top: 8px; }
+.bubble .prod { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; align-items: center; background: #f6f3ee; border-radius: 10px; padding: 6px; font-size: 13px; }
+.bubble .prod .art { aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; }
+.bubble .prod .art svg { width: 100%; height: 100%; }
+.bubble .acts { display: grid; gap: 4px; margin-top: 8px; }
+.bubble .acts span { text-align: center; color: #2b6cb0; font-weight: 600; font-size: 13.5px; padding: 7px; border-top: 1px solid #eee; }
+.steps-list { margin: 10px 0 0; padding-left: 20px; display: grid; gap: 8px; font-size: 14.5px; }
+
+/* Checkout */
+.co { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 30px; padding-block: 40px 80px; }
+.co .card { margin-bottom: 14px; }
+.co h3 { font-size: 24px; margin-bottom: 10px; }
+.field { display: grid; gap: 4px; font-size: 13px; font-weight: 500; color: var(--mute); margin-bottom: 12px; }
+.input { width: 100%; height: 48px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); padding: 0 14px; font: inherit; color: var(--ink); }
+.input:focus { outline: none; border-color: var(--curtain); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.pays { display: grid; gap: 8px; }
+.pay { display: flex; justify-content: space-between; align-items: center; text-align: left; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; }
+.pay small { display: block; color: var(--mute); }
+.pay.on { border-color: var(--curtain); box-shadow: inset 0 0 0 1px var(--curtain); }
+.demo { background: var(--wall-2); border-radius: 14px; padding: 12px 14px; font-size: 14px; margin: 0 0 14px; }
+.sum-card { position: sticky; top: 96px; align-self: start; }
+
+/* Story viewer (dark) */
+.viewer { position: fixed; inset: 0; z-index: 60; background: rgba(8, 6, 8, .94); display: grid; place-items: center; opacity: 0; pointer-events: none; transition: opacity .3s; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.viewer.on { opacity: 1; pointer-events: auto; }
+.phone { position: relative; width: min(420px, 100%); height: min(860px, 100%); border-radius: 30px; overflow: hidden; background: var(--night); color: #fff; touch-action: none; user-select: none; -webkit-user-select: none; }
+.slide { position: absolute; inset: 0; }
+.slide .fig { position: absolute; left: 6%; right: 6%; top: 12%; height: 62%; animation: zoomIn 6s ease-out both; }
+.slide .fig svg { width: 100%; height: 100%; }
+@keyframes zoomIn { from { transform: scale(1.06); } }
+.slide .line { position: absolute; left: 18px; right: 18px; bottom: 120px; font-family: var(--story); font-size: 46px; line-height: .96; text-shadow: 0 2px 30px rgba(0, 0, 0, .25); }
+.slide .shade { position: absolute; inset: 45% 0 0; background: linear-gradient(transparent, rgba(12, 10, 13, .72)); }
+.slide.text { display: grid; place-items: center; padding: 40px 26px; text-align: center; }
+.slide.text h2 { font-family: var(--story); font-size: 52px; line-height: .95; margin: 0 0 14px; }
+.slide.text p { font-size: 16px; max-width: 28ch; margin: 0 auto; color: rgba(255, 255, 255, .86); }
+.bars { position: absolute; left: 10px; right: 10px; top: 10px; z-index: 5; display: flex; gap: 4px; }
+.bars .seg { flex: 1; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .3); overflow: hidden; }
+.bars .seg i { display: block; height: 100%; width: 0; background: #fff; }
+.vhead { position: absolute; left: 12px; right: 8px; top: 22px; z-index: 5; display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+.vhead .av { width: 34px; height: 34px; border-radius: 50%; padding: 2px; background: var(--ring); }
+.vhead .av span { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; background: var(--night); font-family: var(--story); font-size: 17px; }
+.vhead .whois { flex: 1; min-width: 0; }
+.vhead button { width: 38px; height: 38px; display: grid; place-items: center; }
+.sticker { position: absolute; left: 50%; top: 56%; transform: translateX(-50%) rotate(-3deg); z-index: 4; display: flex; align-items: center; gap: 8px; padding: 9px 14px 9px 12px; border-radius: 999px; background: #fff7f2; color: #2a1018; font-weight: 700; font-size: 13.5px; white-space: nowrap; box-shadow: 0 12px 30px -10px rgba(0, 0, 0, .45); }
+.sticker .dot { width: 8px; height: 8px; border-radius: 50%; background: #a03d66; }
+.tap { position: absolute; left: 0; right: 0; top: 70px; bottom: 90px; z-index: 3; }
+.vfoot { position: absolute; left: 12px; right: 12px; bottom: 14px; z-index: 5; display: flex; gap: 10px; }
+.vfoot .ask { flex: 1; min-width: 0; height: 46px; border-radius: 999px; border: 1px solid rgba(255, 255, 255, .45); color: rgba(255, 255, 255, .85); text-align: left; padding: 0 16px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.vfoot .shop { height: 46px; padding: 0 18px; border-radius: 999px; background: #fff7f2; color: #2a1018; font-weight: 700; display: flex; align-items: center; }
+
+.toast { position: fixed; z-index: 80; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 160%); visibility: hidden; transition: transform .45s var(--ease); background: var(--ink); color: var(--paper); padding: 13px 20px; border-radius: 16px; font-size: 14px; max-width: calc(100% - 32px); }
+.toast.on { transform: translate(-50%, 0); visibility: visible; }
+.swing { transform-box: view-box; transform-origin: 150px 18px; animation: sway 7s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-1.4deg); } 50% { transform: rotate(1.4deg); } }
+
+@media (max-width: 1000px) {
+  .room, .trial, .co, .hero { grid-template-columns: minmax(0, 1fr); }
+  .mirror-col, .sum-card { position: static; }
+  .mirror { max-width: 330px; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .send { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  nav.main a:not(.keep) { display: none; }
+  .logo small { display: none; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 12px; }
+  .rail { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .look-actions { grid-template-columns: minmax(0, 1fr) auto; }
+  .look-actions .btn.dark { grid-column: 1 / -1; }
+  .why-row { grid-template-columns: minmax(0, 1fr) 60px 34px; }
+  .why-row .t { grid-column: 1 / -1; order: 4; color: var(--mute); margin-top: -4px; }
+  .w-row { grid-template-columns: minmax(0, 1fr) 110px 30px; }
+  .two { grid-template-columns: minmax(0, 1fr); }
+  .phone { border-radius: 0; height: 100%; }
+  .pick { grid-template-columns: 56px minmax(0, 1fr) auto; gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .001ms !important; }
+}
+
+/* ---------------------------------------------------------------- Themes
+   The same shop in eight looks. Each theme only redefines the tokens and the three faces;
+   layout, pages and picks are identical, so the owner compares look and feel alone. */
+h1, h2, h3, .logo { font-weight: var(--dw, 400); letter-spacing: var(--dls, 0); }
+.hero-art { background: radial-gradient(80% 70% at 50% 35%, var(--paper), var(--wall-2)); }
+.glass { background: radial-gradient(90% 60% at 50% 30%, var(--paper) 0%, var(--wall) 55%, var(--wall-2) 100%); }
+.look-card .try { background: color-mix(in srgb, var(--paper) 92%, transparent); }
+.chip.warn { background: color-mix(in srgb, var(--flag) 14%, var(--paper)); }
+.scrim { background: color-mix(in srgb, var(--ink) 42%, transparent); }
+
+/* 2 · Indigo Denim: workwear blue, rust stitching, a sturdy grotesk. */
+[data-look="denim"] {
+  --wall: #e6e9f0; --wall-2: #d3d9e6; --paper: #f7f8fb; --ink: #141b2e; --mute: #525c74; --line: #c6cee0;
+  --curtain: #22325e; --curtain-2: #34477d; --brass: #c2622d; --brass-hi: #f0a877; --form: #d6cfc6;
+  --flag: #c2422d; --good: #2c6e57; --rose: #f0a877;
+  --ring: conic-gradient(from 210deg, #f0a877, #c2622d, #34477d, #f0a877);
+  --display: "Bricolage Grotesque", "Arial Black", system-ui, sans-serif; --dw: 700; --dls: -.02em;
+  --story: "Instrument Serif", Georgia, serif; --sans: "Manrope", system-ui, sans-serif;
+}
+/* 3 · Blush Atelier: powder pink, cocoa ink, rose gold; a couture serif. */
+[data-look="blush"] {
+  --wall: #f6e9e6; --wall-2: #efd9d4; --paper: #fffaf8; --ink: #3a2420; --mute: #7a5e58; --line: #e8d0ca;
+  --curtain: #8c4a52; --curtain-2: #a8636b; --brass: #c99a7a; --brass-hi: #f1d3bd; --form: #ecd9cf;
+  --flag: #b0384f; --good: #4e7a5e; --rose: #f1c4c0;
+  --ring: conic-gradient(from 210deg, #f1d3bd, #e7a5a5, #8c4a52, #f1d3bd);
+  --display: "Cormorant Garamond", "Didot", Georgia, serif; --dw: 600;
+  --story: "Cormorant Garamond", Georgia, serif; --sans: "Jost", system-ui, sans-serif;
+}
+/* 4 · Noir Party: after dark, champagne gold on black, a sharp Didone. */
+[data-look="noir"] {
+  --wall: #0f0e10; --wall-2: #1b191d; --paper: #18161a; --ink: #f3ede4; --mute: #a59d93; --line: #332f36;
+  --curtain: #050506; --curtain-2: #2a2530; --brass: #d4b06a; --brass-hi: #f0d9a2; --form: #3a3238;
+  --flag: #ff7f9c; --good: #6cc59a; --night: #050506; --rose: #e8b4a6;
+  --ring: conic-gradient(from 210deg, #f0d9a2, #d4b06a, #8f6b2e, #f0d9a2);
+  --display: "Bodoni Moda", "Didot", Georgia, serif; --dw: 500;
+  --story: "Bodoni Moda", Georgia, serif; --sans: "Outfit", system-ui, sans-serif;
+  color-scheme: dark;
+}
+[data-look="noir"] .btn { border-color: var(--ink); }
+[data-look="noir"] .btn.dark { background: var(--brass); border-color: var(--brass); color: #120f0a; }
+[data-look="noir"] .btn.dark:hover { background: var(--brass-hi); }
+[data-look="noir"] .pill.on { background: var(--brass); border-color: var(--brass); color: #120f0a; }
+[data-look="noir"] .bag-n { color: #120f0a; }
+[data-look="noir"] header, [data-look="noir"] .preview-band b, [data-look="noir"] .on-tag { color: var(--ink); }
+[data-look="noir"] .hero h1 i { color: var(--brass); }
+[data-look="noir"] .input:focus, [data-look="noir"] .pay.on { border-color: var(--brass); }
+[data-look="noir"] .w-row input { accent-color: var(--brass); }
+/* 5 · Terracotta Sun: warm clay, sand and olive; a soft old-style serif. */
+[data-look="terracotta"] {
+  --wall: #efe4d6; --wall-2: #e3d3bf; --paper: #fbf6ef; --ink: #2e1f17; --mute: #6e5a4b; --line: #dcc9b3;
+  --curtain: #a8492c; --curtain-2: #c0603f; --brass: #6f7a3a; --brass-hi: #d8dca0; --form: #e2cdb6;
+  --flag: #a8302c; --good: #56702f; --rose: #eab08f;
+  --ring: conic-gradient(from 210deg, #eab08f, #c0603f, #6f7a3a, #eab08f);
+  --display: "Fraunces", Georgia, serif; --dw: 600; --dls: -.01em;
+  --story: "Fraunces", Georgia, serif; --sans: "DM Sans", system-ui, sans-serif;
+}
+/* 6 · Gallery White: museum white, black type, one red; a wide display grotesk. */
+[data-look="gallery"] {
+  --wall: #ffffff; --wall-2: #efefef; --paper: #ffffff; --ink: #0a0a0a; --mute: #5f5f5f; --line: #dedede;
+  --curtain: #0a0a0a; --curtain-2: #2a2a2a; --brass: #e0261b; --brass-hi: #ff8a80; --form: #e6e0da;
+  --flag: #e0261b; --good: #1f7a4a; --rose: #ffb3ab;
+  --ring: conic-gradient(from 210deg, #0a0a0a, #e0261b, #0a0a0a);
+  --display: "Syne", "Arial Black", system-ui, sans-serif; --dw: 700; --dls: -.03em;
+  --story: "DM Serif Display", Georgia, serif; --sans: "Inter", system-ui, sans-serif;
+}
+[data-look="gallery"] .card, [data-look="gallery"] .look-card .plate, [data-look="gallery"] .hero-art { border-radius: 4px; }
+[data-look="gallery"] .btn.brass { color: #fff; }
+/* 7 · Citrus Pop: cobalt and lime for the college crowd; rounded, loud display. */
+[data-look="citrus"] {
+  --wall: #f3f5e8; --wall-2: #e4ebc6; --paper: #fdfef8; --ink: #101433; --mute: #4f5577; --line: #d9dfb9;
+  --curtain: #2338d6; --curtain-2: #3d52ee; --brass: #c7f03a; --brass-hi: #e3ff8a; --form: #e8dccf;
+  --flag: #ff3d7f; --good: #12805c; --rose: #ffb0cb;
+  --ring: conic-gradient(from 210deg, #c7f03a, #3d52ee, #ff3d7f, #c7f03a);
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif; --dw: 600; --dls: -.02em;
+  --story: "Instrument Serif", Georgia, serif; --sans: "Space Grotesk", system-ui, sans-serif;
+}
+[data-look="citrus"] .hero h1 { font-size: clamp(38px, 5.2vw, 76px); }
+/* 8 · Lilac Haze: lavender and plum, gentle and romantic; a friendly serif. */
+[data-look="lilac"] {
+  --wall: #ece8f4; --wall-2: #ddd6ec; --paper: #fbfaff; --ink: #251c38; --mute: #625a78; --line: #d6cfe6;
+  --curtain: #4b3474; --curtain-2: #644a93; --brass: #b892d8; --brass-hi: #e4d2f5; --form: #e3d6dc;
+  --flag: #b03a72; --good: #3f7a63; --rose: #f2c4dc;
+  --ring: conic-gradient(from 210deg, #e4d2f5, #b892d8, #b03a72, #e4d2f5);
+  --display: "Young Serif", Georgia, serif; --dw: 400;
+  --story: "Instrument Serif", Georgia, serif; --sans: "Outfit", system-ui, sans-serif;
+}
+
+/* The theme switcher: a small tab bottom-left that opens the eight swatches. */
+.looks { position: fixed; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 45; font-family: "Outfit", system-ui, sans-serif; }
+.looks-tab { display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 10px; border-radius: 999px; background: #111; color: #fff; font-size: 13.5px; font-weight: 600; box-shadow: 0 8px 30px rgba(0, 0, 0, .25); }
+.looks-tab .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; }
+.looks-panel { position: absolute; left: 0; bottom: calc(100% + 10px); width: min(380px, calc(100vw - 32px)); max-height: min(70vh, 620px); overflow: auto; background: #fff; color: #111; border-radius: 20px; padding: 14px; box-shadow: 0 20px 60px rgba(0, 0, 0, .3); display: grid; gap: 8px; }
+.looks-panel h4 { margin: 2px 4px 4px; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #666; }
+.look-opt { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center; text-align: left; padding: 8px; border-radius: 14px; border: 1px solid #e6e6e6; }
+.look-opt:hover { border-color: #999; }
+.look-opt.on { border-color: #111; box-shadow: inset 0 0 0 1px #111; }
+.look-opt .chips4 { display: grid; grid-template-columns: 1fr 1fr; width: 64px; height: 44px; border-radius: 10px; overflow: hidden; }
+.look-opt b { display: block; font-size: 17px; line-height: 1.15; color: #111; }
+.look-opt span.d { display: block; font-size: 12.5px; color: #555; line-height: 1.35; }
+.looks-step { display: flex; gap: 6px; }
+.looks-step button { flex: 1; padding: 8px; border-radius: 999px; border: 1px solid #ddd; font-size: 13px; font-weight: 600; color: #111; }
+</style>
+
+<div class="preview-band" role="note"><b>Design preview</b> for The Hanger by Nemnidhi · eight themes on the combined shop (switch at bottom-left) · not a live shop · nothing you type is sent anywhere</div>
+
+<header>
+  <div class="wrap">
+    <a class="logo" href="#home">The Hanger <small>Indore</small></a>
+    <nav class="main" aria-label="Main">
+      <a href="#home" data-nav="home">Drop 07</a>
+      <a href="#room" data-nav="room" class="keep">Fitting room</a>
+      <a href="#trial" data-nav="trial">Trial room (staff)</a>
+    </nav>
+    <button class="bag-btn" onclick="openBag()" aria-label="Open bag">Bag<span class="bag-n num" id="bagN">0</span></button>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="scrim" id="scrim" onclick="closeAll()"></div>
+<aside class="panel" id="panel" aria-label="Your bag"></aside>
+<div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+<div class="viewer" id="viewer" aria-label="Story"><div class="phone" id="phone"></div></div>
+<div class="toast" id="toast" role="status"></div>
+
+<div id="looks" class="looks"></div>
+<script>
+const BAG_KEY = "hanger-bag-combined";
+/* Shared by the three design previews: the demo catalogue, moods and the drawn garments. */
+const P = [
+  { code: "DRS-001", name: "Linen midi dress", cat: "Dresses", price: 1999, colour: "Sage", hex: "#9caf88", bg: "#eef2e7", type: "dress", fabric: "linen", moods: ["brunch", "getaway"], stock: { XS: 1, S: 2, M: 4, L: 2, XL: 0 }, fit: 0, isNew: true,
+    blurb: "Washed linen that only gets softer. A fitted bodice and a skirt that moves when you do.", fabricText: "100% linen, garment washed. Lined bodice.", pairs: ["JKT-002", "TOP-030"] },
+  { code: "DRS-002", name: "Satin slip dress", cat: "Dresses", price: 2499, colour: "Wine", hex: "#7a2e4f", bg: "#f4e3ea", type: "slip", fabric: "satin", moods: ["date"], stock: { S: 1, M: 2, L: 1 }, fit: -1, isNew: true,
+    blurb: "Cut on the bias so it falls like water. Adjustable straps, a cowl that catches the light.", fabricText: "Viscose satin with a soft sheen.", pairs: ["JKT-002", "DRS-021"] },
+  { code: "TOP-014", name: "Satin wrap top", cat: "Tops", price: 1299, colour: "Champagne", hex: "#dec6a0", bg: "#f6eee2", type: "wrap", fabric: "satin", moods: ["work", "date"], stock: { XS: 2, S: 1, M: 4, L: 2 }, fit: 0, isNew: true,
+    blurb: "Ties at the waist, the way you like it. Office by day, dinner by night.", fabricText: "Polyester satin, fully washable.", pairs: ["SKT-008", "JNS-030"] },
+  { code: "TOP-021", name: "Block-print cotton top", cat: "Tops", price: 899, colour: "Indigo", hex: "#3c4882", bg: "#e6e9f3", type: "tee", fabric: "print", moods: ["brunch", "getaway"], stock: { S: 2, M: 4, L: 2, XL: 1 }, fit: 1, isNew: false,
+    blurb: "Hand block-printed in Jaipur on breezy cotton. Every piece prints a little differently.", fabricText: "100% cotton, hand block-printed. Colour may vary slightly.", pairs: ["JNS-030", "SKT-008"] },
+  { code: "COR-005", name: "Linen co-ord set", cat: "Co-ords", price: 3299, colour: "Sand", hex: "#cdba96", bg: "#f3ede2", type: "coord", fabric: "linen", moods: ["work", "getaway"], stock: { S: 1, M: 3, L: 2 }, fit: 0, isNew: true,
+    blurb: "A boxy shirt and easy wide trousers. Wear together, or split them up all week.", fabricText: "Linen blend. Elastic back waist.", pairs: ["TOP-014", "JKT-002"] },
+  { code: "JNS-030", name: "Wide-leg jeans", cat: "Jeans", price: 1799, colour: "Mid blue", hex: "#5c7ca8", bg: "#e5ecf4", type: "jeans", fabric: "denim", moods: ["brunch", "work", "getaway"], stock: { 26: 2, 28: 4, 30: 3, 32: 1 }, fit: 0, isNew: false,
+    blurb: "High rise, a long wide leg, and the kind of blue that goes with everything.", fabricText: "Cotton denim with a little stretch.", pairs: ["TOP-014", "TOP-021"] },
+  { code: "SKT-008", name: "Pleated midi skirt", cat: "Skirts", price: 1499, colour: "Black", hex: "#2b2a2e", bg: "#ecebee", type: "skirt", fabric: "cotton", moods: ["work", "date"], stock: { S: 2, M: 4, L: 1 }, fit: 0, isNew: false,
+    blurb: "Knife pleats that swing as you walk. Dress it up or down with one change of shoes.", fabricText: "Crepe with permanent pleats. Hidden side zip.", pairs: ["TOP-014", "JKT-002"] },
+  { code: "JKT-002", name: "Cropped denim jacket", cat: "Jackets", price: 2799, colour: "Light wash", hex: "#96b0cc", bg: "#e8eff6", type: "jacket", fabric: "denim", moods: ["getaway", "brunch"], stock: { S: 1, M: 2, L: 2 }, fit: 1, isNew: true,
+    blurb: "The jacket that finishes every outfit. Cropped to sit right on high-waisted everything.", fabricText: "Rigid cotton denim, light wash.", pairs: ["DRS-001", "SKT-008"] },
+  { code: "DRS-014", name: "Tiered maxi dress", cat: "Dresses", price: 2699, colour: "Terracotta", hex: "#c0704f", bg: "#f6e5dc", type: "maxi", fabric: "cotton", moods: ["getaway", "brunch"], stock: { S: 2, M: 3, L: 1, XL: 1 }, fit: 1, isNew: false,
+    blurb: "Three soft tiers and a colour that looks like sunset. Made for holiday photos.", fabricText: "Cotton voile, lined to the knee.", pairs: ["JKT-002"] },
+  { code: "TOP-030", name: "Puff-sleeve top", cat: "Tops", price: 1199, colour: "Ivory", hex: "#f1e9dc", bg: "#f5e4e2", type: "puff", fabric: "cotton", moods: ["brunch", "date"], stock: { XS: 1, S: 3, M: 3, L: 1 }, fit: 0, isNew: false,
+    blurb: "Romantic sleeves, a square neck and a smocked back that fits like it was made for you.", fabricText: "Cotton poplin with a smocked back.", pairs: ["JNS-030", "SKT-008"] },
+  { code: "DRS-021", name: "Ribbed knit midi", cat: "Dresses", price: 2299, colour: "Cocoa", hex: "#7b5544", bg: "#f1e6df", type: "knit", fabric: "knit", moods: ["date", "work"], stock: { S: 2, M: 2, L: 0 }, fit: -1, isNew: false,
+    blurb: "A close-fitting rib knit that holds its shape. Pairs with a denim jacket on cool evenings.", fabricText: "Viscose rib knit with stretch.", pairs: ["JKT-002"] },
+  { code: "DRS-030", name: "Linen shirt dress", cat: "Dresses", price: 2199, colour: "Powder blue", hex: "#a9c2d6", bg: "#e9f0f5", type: "shirtdress", fabric: "linen", moods: ["work", "brunch"], stock: { S: 1, M: 3, L: 2, XL: 1 }, fit: 0, isNew: false,
+    blurb: "A crisp collar, a tie belt and pockets. The easiest smart thing you'll own.", fabricText: "Linen-cotton blend. Removable belt.", pairs: ["JKT-002", "SKT-008"] },
+];
+const byCode = Object.fromEntries(P.map((p) => [p.code, p]));
+const rupees = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
+const totalLeft = (p) => Object.values(p.stock).reduce((a, b) => a + b, 0);
+const FREE_SHIP = 1999;
+
+const MOODS = {
+  brunch: { name: "Sunday brunch", sub: "light, easy, golden", wash: "#f7e6bd", mc: "#fbe9c2", copy: "Soft linens and easy shapes — dressed up without ever looking like you tried.", icon: '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>' },
+  work: { name: "Big day at work", sub: "sharp, calm, sure", wash: "#dfe6ef", mc: "#dbe4f0", copy: "Clean lines that walk into the room a second before you do.", icon: '<rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V5.5a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 5.5v2"/>' },
+  date: { name: "Date night", sub: "a little shine", wash: "#f2d6df", mc: "#f4d3de", copy: "Satin, a soft glow, and the kind of confidence you can feel across the table.", icon: '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>' },
+  getaway: { name: "Weekend getaway", sub: "packs small, shoots big", wash: "#dcebdf", mc: "#d6eadb", copy: "Pieces that fold small in a bag and look beautiful in every photo.", icon: '<path d="M3 17l7-10 4 6 2-3 5 7z"/><circle cx="17" cy="6" r="2"/>' },
+};
+
+/* ---------------------------------------------------------------------------------------------
+   Garment art. Each piece hangs on the brand's hanger and sways. Shapes in a 300 x 400 box,
+   shoulders at y ~ 86. Fabric is a texture overlay clipped to the shape, then light and shade.
+--------------------------------------------------------------------------------------------- */
+const SHAPES = {
+  dress: { parts: ["M118 86 Q150 112 182 86 L196 96 Q198 130 186 168 L222 368 Q150 384 78 368 L114 168 Q102 130 104 96 Z"],
+    lines: ["M114 168 Q150 177 186 168", "M132 196 L114 362", "M150 180 L150 374", "M168 196 L186 362"] },
+  slip: { parts: ["M120 118 Q150 146 180 118 L186 176 Q196 270 210 366 Q150 381 90 366 Q104 270 114 176 Z"],
+    lines: ["M121 119 L124 87", "M179 119 L176 87", "M140 200 Q136 290 126 370", "M162 210 Q166 300 176 370", "M124 132 Q150 158 176 132"] },
+  wrap: { parts: ["M112 86 L72 112 L86 160 L112 140 L114 246 Q150 257 186 246 L188 140 L214 160 L228 112 L188 86 Q150 124 112 86 Z"],
+    lines: ["M150 121 Q142 180 114 228", "M112 140 L116 90", "M188 140 L184 90", "M114 228 l-16 30", "M114 228 l-3 34"] },
+  tee: { parts: ["M114 86 L76 104 L90 146 L112 134 L112 252 L188 252 L188 134 L210 146 L224 104 L186 86 Q150 108 114 86 Z"],
+    lines: ["M112 134 L114 92", "M188 134 L186 92", "M112 242 L188 242"] },
+  coord: { parts: ["M114 86 L84 102 L94 140 L114 130 L114 186 L186 186 L186 130 L206 140 L216 102 L186 86 L164 86 L150 106 L136 86 Z", "M112 198 L188 198 L206 372 L160 372 L150 262 L140 372 L94 372 Z"],
+    lines: ["M150 106 L150 186", "M136 86 L142 110 L150 106", "M164 86 L158 110 L150 106", "M112 208 L188 208", "M128 222 L118 370", "M172 222 L182 370"], dots: [[150, 126], [150, 146], [150, 166]] },
+  jeans: { parts: ["M104 92 L196 92 L214 372 L162 372 L150 182 L138 372 L86 372 Z"],
+    lines: ["M104 106 L196 106", "M150 106 L150 164", "M110 114 Q122 136 140 114", "M190 114 Q178 136 160 114", "M88 360 L138 360", "M162 360 L212 360"], clips: true },
+  skirt: { parts: ["M108 92 L192 92 L192 108 L108 108 Z", "M108 108 L192 108 L228 344 Q150 360 72 344 Z"],
+    lines: ["M120 108 L94 348", "M135 108 L122 352", "M150 108 L150 354", "M165 108 L178 352", "M180 108 L206 348"], clips: true },
+  jacket: { parts: ["M110 86 L74 104 L62 236 L86 238 L98 146 L108 140 L106 206 L194 206 L192 140 L202 146 L214 238 L238 236 L226 104 L190 86 L166 94 L150 150 L134 94 Z"],
+    lines: ["M150 150 L150 206", "M134 94 L120 124 L144 132", "M166 94 L180 124 L156 132", "M106 192 L194 192", "M116 152 L138 152", "M162 152 L184 152", "M98 146 L108 140", "M202 146 L192 140"], dots: [[150, 166], [150, 182]] },
+  maxi: { parts: ["M116 86 Q150 110 184 86 L194 98 Q196 128 186 158 L196 222 L208 292 L226 372 Q150 388 74 372 L92 292 L104 222 L114 158 Q104 128 106 98 Z"],
+    lines: ["M114 158 Q150 166 186 158", "M104 222 Q150 232 196 222", "M92 292 Q150 304 208 292"] },
+  puff: { parts: ["M118 94 Q150 112 182 94 L186 130 L188 238 Q150 248 112 238 L114 130 Z", "M118 94 Q74 92 76 130 Q82 154 114 138 Z", "M182 94 Q226 92 224 130 Q218 154 186 138 Z"],
+    lines: ["M118 104 Q150 120 182 104", "M92 108 Q96 128 112 134", "M208 108 Q204 128 188 134", "M114 214 L186 214", "M114 222 L186 222"] },
+  knit: { parts: ["M118 86 Q150 106 182 86 L190 100 Q186 140 186 170 Q180 262 192 362 Q150 374 108 362 Q120 262 114 170 Q114 140 110 100 Z"],
+    lines: ["M118 100 Q150 118 182 100"] },
+  shirtdress: { parts: ["M112 86 L82 104 L92 146 L112 134 L112 172 L96 370 Q150 382 204 370 L188 172 L188 134 L208 146 L218 104 L188 86 L164 86 L150 104 L136 86 Z"],
+    lines: ["M150 104 L150 376", "M136 86 L142 110 L150 104", "M164 86 L158 110 L150 104", "M126 220 L112 360", "M174 220 L188 360"], belt: "M110 166 L190 166 L190 180 L110 180 Z", dots: [[150, 126], [150, 148], [150, 206], [150, 236], [150, 266]] },
+};
+
+let uid = 0;
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (c) => Math.max(0, Math.min(255, Math.round(c + (amt < 0 ? c * amt : (255 - c) * amt))));
+  return "#" + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+function fabricDefs(id, p) {
+  const light = shade(p.hex, .55);
+  switch (p.fabric) {
+    case "linen": return `<filter id="${id}t" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".95 .08" numOctaves="2" seed="${uid}"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 -.18"/></filter>`;
+    case "satin": return `<linearGradient id="${id}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".3" stop-color="#fff" stop-opacity=".42"/><stop offset=".44" stop-color="#fff" stop-opacity="0"/><stop offset=".64" stop-color="#fff" stop-opacity=".26"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
+    case "denim": return `<pattern id="${id}t" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="5" height="5" fill="none"/><path d="M0 0V5" stroke="#fff" stroke-opacity=".16" stroke-width="1.6"/></pattern>`;
+    case "print": return `<pattern id="${id}t" width="30" height="30" patternUnits="userSpaceOnUse"><g fill="${light}" fill-opacity=".75"><circle cx="15" cy="15" r="2.6"/><ellipse cx="15" cy="8.5" rx="2" ry="3.6"/><ellipse cx="15" cy="21.5" rx="2" ry="3.6"/><ellipse cx="8.5" cy="15" rx="3.6" ry="2"/><ellipse cx="21.5" cy="15" rx="3.6" ry="2"/><circle cx="0" cy="0" r="1.6"/><circle cx="30" cy="30" r="1.6"/><circle cx="30" cy="0" r="1.6"/><circle cx="0" cy="30" r="1.6"/></g></pattern>`;
+    case "knit": return `<pattern id="${id}t" width="7" height="10" patternUnits="userSpaceOnUse"><path d="M3.5 0V10" stroke="#000" stroke-opacity=".16" stroke-width="2.2"/></pattern>`;
+    default: return `<filter id="${id}t" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="${uid}"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .3 -.1"/></filter>`;
+  }
+}
+function fabricLayer(id, p) {
+  if (p.fabric === "linen" || p.fabric === "cotton") return `<rect width="300" height="400" filter="url(#${id}t)"/>`;
+  return `<rect width="300" height="400" fill="url(#${id}t)"/>`;
+}
+const HANGER = `<path d="M150 52 C150 43 161 41 161 31 C161 23 155 18 148 19 C142 20 139 25 140 30" fill="none" stroke="#a5875d" stroke-width="3.4" stroke-linecap="round"/><path d="M150 52 V57 L79 87 Q73 91 80 92 H220 Q227 91 221 87 L150 57" fill="none" stroke="#b8925a" stroke-width="4.5" stroke-linejoin="round"/>`;
+
+function garment(p, { viewBox = "0 0 300 400", cls = "", label = true, hanger = true } = {}) {
+  const id = "g" + (uid += 1);
+  const s = SHAPES[p.type];
+  const dark = shade(p.hex, -.28);
+  const isLight = parseInt(p.hex.slice(1, 3), 16) > 200;
+  const lineCol = isLight ? "rgba(90,70,50,.28)" : "rgba(0,0,0,.22)";
+  const clips = s.clips ? `<g fill="#c9a56c"><rect x="108" y="82" width="14" height="16" rx="2"/><rect x="178" y="82" width="14" height="16" rx="2"/></g>` : "";
+  const delay = (-(uid * 1.7) % 7).toFixed(2);
+  return `<svg class="garment ${cls}" viewBox="${viewBox}" ${label ? `role="img" aria-label="${p.name} in ${p.colour}"` : 'aria-hidden="true"'}>
+    <defs>
+      <clipPath id="${id}c">${s.parts.map((d) => `<path d="${d}"/>`).join("")}</clipPath>
+      <linearGradient id="${id}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+      <linearGradient id="${id}v" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".14"/></linearGradient>
+      ${fabricDefs(id, p)}
+    </defs>
+    <g class="${hanger ? "swing" : "still"}" style="animation-delay:${delay}s">
+      ${hanger ? HANGER : ""}
+      ${s.parts.map((d) => `<path d="${d}" fill="${p.hex}"/>`).join("")}
+      <g clip-path="url(#${id}c)">${fabricLayer(id, p)}<rect width="300" height="400" fill="url(#${id}s)"/><rect width="300" height="400" fill="url(#${id}v)"/></g>
+      <g fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round">${s.lines.map((d) => `<path d="${d}"/>`).join("")}</g>
+      ${s.belt ? `<path d="${s.belt}" fill="${dark}"/>` : ""}
+      ${(s.dots || []).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.2" fill="${isLight ? "#fffaf0" : shade(p.hex, .5)}" stroke="${lineCol}"/>`).join("")}
+      ${hanger ? clips : ""}
+    </g>
+  </svg>`;
+}
+
+
+
+/* Bag, kept in this browser only (design preview). */
+let bag = [];
+try { bag = JSON.parse(localStorage.getItem(BAG_KEY) || "[]").filter((l) => byCode[l.code] && byCode[l.code].stock[l.size] != null); } catch { bag = []; }
+const saveBag = () => { try { localStorage.setItem(BAG_KEY, JSON.stringify(bag)); } catch {} };
+const bagQty = () => bag.reduce((a, l) => a + l.qty, 0);
+const bagTotal = () => bag.reduce((a, l) => a + byCode[l.code].price * l.qty, 0);
+const deliveryFor = (total) => (total >= FREE_SHIP || !total ? 0 : 99);
+/** Adds one piece; returns a message when the size has run out. */
+function bagAdd(code, size) {
+  const p = byCode[code];
+  const line = bag.find((l) => l.code === code && l.size === size);
+  if ((line ? line.qty : 0) >= p.stock[size]) return `That's every ${size} we have in the ${p.name.toLowerCase()}.`;
+  if (line) line.qty += 1; else bag.push({ code, size, qty: 1 });
+  saveBag();
+  return "";
+}
+function bagStep(i, d) {
+  const l = bag[i];
+  l.qty = Math.max(0, Math.min(byCode[l.code].stock[l.size], l.qty + d));
+  if (!l.qty) bag.splice(i, 1);
+  saveBag();
+}
+const sizesOf = (p) => Object.keys(p.stock);
+const fitWords = (p) => (p.fit < 0 ? "Runs small: take one size up" : p.fit > 0 ? "Relaxed: size down for a closer fit" : "True to size");
+const leftWords = (n) => (n === 0 ? "Sold out" : n === 1 ? "1 left" : n <= 2 ? `${n} left` : "");
+const PINS = { 452: ["Indore", "Madhya Pradesh"], 453: ["Indore", "Madhya Pradesh"], 462: ["Bhopal", "Madhya Pradesh"], 400: ["Mumbai", "Maharashtra"], 411: ["Pune", "Maharashtra"], 110: ["New Delhi", "Delhi"], 560: ["Bengaluru", "Karnataka"], 302: ["Jaipur", "Rajasthan"], 380: ["Ahmedabad", "Gujarat"] };
+const pinPlace = (pin) => (/^\d{6}$/.test(pin) ? PINS[pin.slice(0, 3)] || ["", ""] : null);
+const etaFor = (pin) => (/^45[23]/.test(pin) ? "Tomorrow, by 8 pm" : /^4[5-8]/.test(pin) ? "In 2 days" : "In 3 to 5 days");
+/** Routes are plain #names: "page" or "page-rest" (a product code keeps its own hyphen). */
+function parseHash() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ""));
+  const i = h.indexOf("-");
+  return i < 0 ? [h, ""] : [h.slice(0, i), h.slice(i + 1)];
+}
+const $ = (sel, root = document) => root.querySelector(sel);
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 3400);
+}
+
+/* ---------------------------------------------------------------------------------------------
+   More stock for the combined design, so the picks have real choices (6 more pieces).
+   days = days on the rail since the piece came in.
+--------------------------------------------------------------------------------------------- */
+Object.assign(SHAPES, {
+  shirt: { parts: ["M114 86 L80 104 L92 150 L114 138 L114 256 L186 256 L186 138 L208 150 L220 104 L186 86 L164 86 L150 106 L136 86 Z"],
+    lines: ["M150 106 L150 256", "M136 86 L142 110 L150 106", "M164 86 L158 110 L150 106", "M114 138 L116 92", "M186 138 L184 92"], dots: [[150, 128], [150, 152], [150, 176], [150, 200], [150, 224]] },
+  tank: { parts: ["M124 92 L136 92 Q150 112 164 92 L176 92 Q178 120 186 136 L188 246 Q150 254 112 246 L114 136 Q122 120 124 92 Z"], lines: [] },
+  blazer: { parts: ["M110 86 L74 104 L62 246 L86 248 L98 146 L108 140 L104 258 L196 258 L192 140 L202 146 L214 248 L238 246 L226 104 L190 86 L166 94 L150 170 L134 94 Z"],
+    lines: ["M134 94 L118 132 L146 150", "M166 94 L182 132 L154 150", "M150 170 L150 258", "M112 214 L134 214", "M166 214 L188 214", "M98 146 L108 140", "M202 146 L192 140"], dots: [[150, 186], [150, 206]] },
+  cardigan: { parts: ["M112 86 L78 104 L66 240 L88 242 L100 146 L110 140 L108 250 L146 252 L148 104 Q128 96 112 86 Z", "M188 86 L222 104 L234 240 L212 242 L200 146 L190 140 L192 250 L154 252 L152 104 Q172 96 188 86 Z"],
+    lines: ["M108 240 L146 241", "M154 241 L192 240"], dots: [[143, 136], [143, 166], [143, 196], [143, 226]] },
+});
+P.push(
+  { code: "TOP-040", name: "Poplin shirt", cat: "Tops", price: 1399, colour: "White", hex: "#f3f1ea", bg: "#edf0f3", type: "shirt", fabric: "cotton", moods: ["work", "brunch"], stock: { S: 2, M: 3, L: 2 }, fit: 0, isNew: true,
+    blurb: "A crisp shirt with a softer collar. Tucked, knotted, or open over a tank.", fabricText: "100% cotton poplin.", pairs: ["JNS-030", "BTM-012", "BTM-020"] },
+  { code: "TOP-052", name: "Ribbed tank", cat: "Tops", price: 799, colour: "Black", hex: "#2b2a2e", bg: "#ecebee", type: "tank", fabric: "knit", moods: ["brunch", "getaway", "date"], stock: { XS: 2, S: 3, M: 4, L: 2 }, fit: -1, isNew: false,
+    blurb: "The base layer for everything. A close rib that holds its shape.", fabricText: "Cotton rib with stretch.", pairs: ["JNS-030", "JKT-015", "JKT-010"] },
+  { code: "BTM-012", name: "Straight trousers", cat: "Trousers", price: 1999, colour: "Taupe", hex: "#a08c78", bg: "#f1ece6", type: "jeans", fabric: "cotton", moods: ["work"], stock: { 26: 1, 28: 3, 30: 2, 32: 2 }, fit: 0, isNew: false,
+    blurb: "High waist, a pressed crease and a straight leg that sits right on flats or heels.", fabricText: "Cotton twill with stretch.", pairs: ["TOP-040", "TOP-014", "JKT-010"] },
+  { code: "BTM-020", name: "Satin midi skirt", cat: "Skirts", price: 1699, colour: "Emerald", hex: "#2f6b55", bg: "#e4efe9", type: "skirt", fabric: "satin", moods: ["date", "brunch"], stock: { S: 1, M: 2, L: 1 }, fit: 0, isNew: true,
+    blurb: "Bias-cut satin that moves like liquid. Elastic waist, no zip.", fabricText: "Viscose satin.", pairs: ["TOP-052", "TOP-040", "JKT-015"] },
+  { code: "JKT-010", name: "Linen blazer", cat: "Jackets", price: 3499, colour: "Ivory", hex: "#ece3d3", bg: "#f3efe8", type: "blazer", fabric: "linen", moods: ["work", "date"], stock: { S: 1, M: 2, L: 1 }, fit: 0, isNew: true,
+    blurb: "Soft shoulders, one button, sleeves you can push up. Makes jeans look like a plan.", fabricText: "Linen blend, half lined.", pairs: ["BTM-012", "TOP-052", "DRS-021"] },
+  { code: "JKT-015", name: "Soft cardigan", cat: "Jackets", price: 1899, colour: "Dusty rose", hex: "#c99a9a", bg: "#f5e8e8", type: "cardigan", fabric: "knit", moods: ["brunch", "getaway"], stock: { S: 2, M: 3, L: 2 }, fit: 1, isNew: false,
+    blurb: "A light knit for air-conditioned offices and cool evenings. Wear it buttoned as a top.", fabricText: "Cotton-viscose knit.", pairs: ["TOP-052", "BTM-020", "DRS-001"] },
+);
+P.forEach((p) => (byCode[p.code] = p));
+const DAYS = { "DRS-001": 9, "DRS-002": 7, "TOP-014": 11, "TOP-021": 48, "COR-005": 5, "JNS-030": 33, "SKT-008": 57, "JKT-002": 12, "DRS-014": 64, "TOP-030": 41, "DRS-021": 29, "DRS-030": 46,
+  "TOP-040": 6, "TOP-052": 52, "BTM-012": 61, "BTM-020": 4, "JKT-010": 9, "JKT-015": 38 };
+/* The store floor has its own stock (the platform keeps stock by location). Demo numbers. */
+const STORE_STOCK = {};
+P.forEach((p, i) => { STORE_STOCK[p.code] = Object.fromEntries(sizesOf(p).map((s, j) => [s, (p.stock[s] + i + j) % 3])); });
+
+const SLOT_OF = (p) => (p.cat === "Dresses" || p.cat === "Co-ords" ? "dress" : p.cat === "Tops" ? "top" : p.cat === "Jackets" ? "layer" : "bottom");
+
+/* ---------------------------------------------------------------------------------------------
+   The picks. Every piece in stock gets a 0-100 score from six graded parts (none is a pass/fail
+   cut-off, except that a piece with no size left at all cannot be sold). The owner sets the weights.
+--------------------------------------------------------------------------------------------- */
+const FAMILY = { White: "n", Ivory: "n", Black: "n", Taupe: "n", Sand: "n", "Mid blue": "n", "Light wash": "n", Champagne: "n", Cocoa: "n",
+  Sage: "green", Emerald: "green", Wine: "red", Indigo: "blue", "Powder blue": "blue", Terracotta: "orange", "Dusty rose": "pink" };
+const GOOD = { "green|pink": .9, "blue|orange": .85, "pink|red": .75, "blue|pink": .7, "blue|green": .6, "green|orange": .55, "orange|pink": .55, "blue|red": .5, "orange|red": .4, "green|red": .35 };
+function colourMatch(a, b) {
+  const x = FAMILY[a.colour] || "n", y = FAMILY[b.colour] || "n";
+  if (x === "n" || y === "n") return a.colour === b.colour ? .7 : 1;
+  if (x === y) return .7;
+  return GOOD[[x, y].sort().join("|")] ?? .45;
+}
+const PARTS = [
+  { key: "size", name: "Her size in stock", w: 30 },
+  { key: "pair", name: "Styled together at the store", w: 20 },
+  { key: "colour", name: "Colours work together", w: 15 },
+  { key: "occasion", name: "Same occasion", w: 15 },
+  { key: "taste", name: "Her taste and budget", w: 10 },
+  { key: "push", name: "Shop's push (new or slow stock)", w: 10 },
+];
+const CUSTOMERS = {
+  new: { id: "new", name: "New visitor", size: null, waist: null, bought: [], returned: [], band: null, colours: [] },
+  riya: { id: "riya", name: "Riya", example: true, size: "M", waist: "30", bought: ["TOP-014", "DRS-002", "JNS-030"], returned: [{ code: "DRS-021", why: "too tight" }], band: [1200, 2800], colours: ["Wine", "Champagne", "Black"],
+    history: ["Bought the satin wrap top (M) and the satin slip (M); kept both", "Wide-leg jeans: exchanged 28 for 30", "Returned the ribbed knit midi: too tight"] },
+};
+const WAIST = { XS: "26", S: "28", M: "30", L: "32", XL: "32" };
+/** Which size to offer her in this piece, and how many are left (in the online room or on the store floor). */
+function bestSize(p, cust, mySize, where = "online") {
+  const stock = where === "store" ? STORE_STOCK[p.code] : p.stock;
+  const list = sizesOf(p);
+  const numeric = /^\d/.test(list[0]);
+  const base = numeric ? cust.waist || WAIST[cust.size || mySize] : cust.size || mySize;
+  let want = list.includes(base) ? base : list[Math.min(list.length - 1, Math.max(0, list.findIndex((s) => s > base)))] || list[0];
+  let note = "";
+  const ranTight = cust.returned.some((r) => r.why === "too tight");
+  if (!numeric && (p.fit < 0 || (ranTight && p.fit === 0 && ["knit", "slip"].includes(p.type)))) {
+    const up = list[list.indexOf(want) + 1];
+    if (up) { want = up; note = p.fit < 0 ? "runs small, so one size up" : "she found close fits tight before, so one size up"; }
+  }
+  if (stock[want]) return { size: want, n: stock[want], note, exact: true };
+  const near = [list[list.indexOf(want) + 1], list[list.indexOf(want) - 1]].find((s) => s && stock[s]);
+  return near ? { size: near, n: stock[near], note: `${want} is sold out`, exact: false } : null;
+}
+function scorePiece(p, worn, cust, mySize, weights, where = "online") {
+  const slot = SLOT_OF(p);
+  const others = worn.map((c) => byCode[c]).filter((w) => SLOT_OF(w) !== slot && !(slot === "dress" && (SLOT_OF(w) === "top" || SLOT_OF(w) === "bottom")) && !((slot === "top" || slot === "bottom") && SLOT_OF(w) === "dress"));
+  const fit = bestSize(p, cust, mySize, where);
+  if (!fit) return null;
+  const why = {};
+  const parts = {};
+  parts.size = fit.exact ? (fit.n >= 2 ? 1 : .75) : .4;
+  why.size = fit.exact ? `Size ${fit.size} in stock${fit.n <= 2 ? ` (${fit.n} left)` : ""}${fit.note ? `: ${fit.note}` : ""}` : `${fit.note}, ${fit.size} has ${fit.n}`;
+  const paired = others.find((w) => w.pairs.includes(p.code) || p.pairs.includes(w.code));
+  parts.pair = paired ? 1 : 0;
+  why.pair = paired ? `Styled with the ${paired.name.toLowerCase()} at the store` : "Not one of the store's pairings";
+  if (others.length) {
+    const cm = others.map((w) => colourMatch(p, w));
+    parts.colour = cm.reduce((a, b) => a + b, 0) / cm.length;
+    const fam = FAMILY[p.colour] || "n";
+    why.colour = fam === "n" ? `${p.colour} goes with anything` : parts.colour >= .8 ? `${p.colour} works with ${others.map((w) => w.colour.toLowerCase()).join(" and ")}` : `${p.colour} is a bolder mix with ${others[0].colour.toLowerCase()}`;
+    const ms = new Set(others.flatMap((w) => w.moods));
+    const shared = p.moods.filter((m) => ms.has(m));
+    parts.occasion = shared.length / p.moods.length;
+    why.occasion = shared.length ? `Same occasion: ${shared.map((m) => MOODS[m].name.toLowerCase()).join(", ")}` : "A different occasion from the rest";
+  } else { parts.colour = .6; parts.occasion = .5; why.colour = "Nothing on the form yet to match"; why.occasion = "Nothing on the form yet to match"; }
+  if (cust.band) {
+    const inBand = p.price >= cust.band[0] && p.price <= cust.band[1];
+    const likes = cust.colours.includes(p.colour);
+    const returned = cust.returned.find((r) => r.code === p.code);
+    parts.taste = returned ? 0 : (inBand ? .6 : .2) + (likes ? .4 : 0);
+    why.taste = returned ? `She returned this before (${returned.why})` : [inBand ? `In her usual ${rupees(cust.band[0])}–${rupees(cust.band[1])}` : `Outside her usual ${rupees(cust.band[0])}–${rupees(cust.band[1])}`, likes ? `she has bought ${p.colour.toLowerCase()} before` : ""].filter(Boolean).join("; ");
+  } else { parts.taste = .5; why.taste = "No history yet for a new visitor"; }
+  const d = DAYS[p.code] || 20;
+  parts.push = d <= 14 ? .8 : d >= 45 ? 1 : .3;
+  why.push = d <= 14 ? `New this drop (${d} days)` : d >= 45 ? `On the rail ${d} days: the shop wants it moving` : `On the rail ${d} days`;
+  const total = PARTS.reduce((a, k) => a + weights[k.key] * parts[k.key], 0) / Math.max(1, PARTS.reduce((a, k) => a + weights[k.key], 0));
+  return { p, slot, fit, parts, why, score: Math.round(total * 100) };
+}
+/** Ranked picks for the pieces on the form: what completes the look first, then swaps. */
+function picksFor(worn, cust, mySize, weights, where = "online") {
+  const slots = new Set(worn.map((c) => SLOT_OF(byCode[c])));
+  const hasDress = slots.has("dress");
+  const open = hasDress ? ["layer"].filter((s) => !slots.has(s)) : ["top", "bottom", "layer"].filter((s) => !slots.has(s));
+  const rows = P.filter((p) => !worn.includes(p.code) && !cust.bought.includes(p.code))
+    .map((p) => scorePiece(p, worn, cust, mySize, weights, where)).filter(Boolean)
+    .map((r) => ({ ...r, kind: open.includes(r.slot) ? "complete" : "swap" }))
+    .filter((r) => !(hasDress && (r.slot === "top" || r.slot === "bottom")) && !(!hasDress && r.slot === "dress" && worn.length > 0));
+  rows.sort((a, b) => (a.kind === b.kind ? b.score - a.score : a.kind === "complete" ? -1 : 1));
+  return rows;
+}
+
+
+const lookNo = (p) => String(P.indexOf(p) + 1).padStart(2, "0");
+const art = (p, opts = {}) => `<div class="art" style="background:${p.bg}">${garment(p, { label: false, ...opts })}</div>`;
+let weights = Object.fromEntries(PARTS.map((k) => [k.key, k.w]));
+let custId = "new", mySize = "M";
+try { const w = JSON.parse(localStorage.getItem("hanger-cb-weights") || "null"); if (w) weights = { ...weights, ...w }; custId = localStorage.getItem("hanger-cb-cust") || "new"; mySize = localStorage.getItem("hanger-cb-size") || "M"; } catch {}
+const keepPrefs = () => { try { localStorage.setItem("hanger-cb-weights", JSON.stringify(weights)); localStorage.setItem("hanger-cb-cust", custId); localStorage.setItem("hanger-cb-size", mySize); } catch {} };
+const cust = () => CUSTOMERS[custId] || CUSTOMERS.new;
+
+/* ------------------------------------------------------------------ Home: stories + the issue */
+const LINES = {
+  "DRS-001": "Softer <i>every</i> wash.", "DRS-002": "Falls like <i>water.</i>", "TOP-014": "Office by day. <i>Dinner</i> by night.", "TOP-021": "Printed by <i>hand</i> in Jaipur.",
+  "COR-005": "Together, or <i>all week</i> apart.", "JNS-030": "The blue that goes with <i>everything.</i>", "SKT-008": "Pleats that <i>swing</i> as you walk.", "JKT-002": "Finishes <i>every</i> outfit.",
+  "DRS-014": "The colour of <i>sunset.</i>", "TOP-030": "Romantic sleeves, <i>smocked</i> back.", "DRS-021": "Close, soft, and it <i>holds</i> its shape.", "DRS-030": "The easiest <i>smart</i> thing you'll own.",
+  "TOP-040": "Crisp, but <i>softer</i> at the collar.", "TOP-052": "The base layer for <i>everything.</i>", "BTM-012": "Trousers that look like a <i>plan.</i>", "BTM-020": "Moves like <i>liquid.</i>",
+  "JKT-010": "Makes jeans look <i>dressed.</i>", "JKT-015": "For cold offices and <i>cool</i> evenings.",
+};
+const STORIES = [
+  { id: "drop", name: "Drop 07", cover: "BTM-020", slides: P.filter((p) => p.isNew).map((p) => p.code) },
+  ...Object.entries(MOODS).map(([id, m]) => ({ id, name: { brunch: "Brunch", work: "Work", date: "Date night", getaway: "Getaway" }[id], cover: P.find((p) => p.moods.includes(id)).code, slides: P.filter((p) => p.moods.includes(id)).map((p) => p.code) })),
+  { id: "under", name: "Under ₹1.5k", cover: "TOP-052", slides: P.filter((p) => p.price < 1500).map((p) => p.code) },
+  { id: "store", name: "Visit us", glyph: "H", slides: [
+    { title: "Try it on before it's <i>yours.</i>", body: "Ask for the trial room at MG Road. We bring your size, and what goes with it.", bg: "linear-gradient(160deg,#a03d66,#3a1628)" },
+    { title: "MG Road, <i>New Palasia</i>", body: "Open daily, 11 am to 9 pm. Free size exchange within 7 days.", bg: "linear-gradient(160deg,#2f5649,#10201a)" },
+  ] },
+];
+let seen = new Set();
+try { seen = new Set(JSON.parse(localStorage.getItem("hanger-cb-seen") || "[]")); } catch {}
+let homeCat = "All";
+function home() {
+  const h = new Date().getHours();
+  const greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+  const hang = ["BTM-020", "JKT-010", "DRS-002", "TOP-040"].map((c) => byCode[c]);
+  return `<div class="wrap">
+    <div class="rings" aria-label="Stories">${STORIES.map((s) => { const c = s.cover && byCode[s.cover]; return `<a class="ring ${seen.has(s.id) ? "seen" : ""}" href="#story-${s.id}"><span class="o"><span class="i" style="background:${c ? c.bg : "var(--rose)"}">${c ? garment(c, { label: false }) : `<span class="glyph">${s.glyph}</span>`}</span></span>${s.name}</a>`; }).join("")}</div>
+    <section class="hero">
+      <div><div class="label mute">${greet}, Indore · Drop 07 · ${P.length} pieces</div><h1 style="margin-top:12px">A few of each.<br><i>Your size first.</i></h1>
+        <p>Watch the drop as stories, then try any piece on the form. The fitting room picks what goes with it from what's in stock in your size, today.</p>
+        <div class="hero-ctas"><a class="btn dark" href="#story-drop">Watch the drop</a><a class="btn" href="#room">Open the fitting room</a></div></div>
+      <div class="hero-art"><span class="rod"></span><div class="hangs">${hang.map((p) => `<button onclick="location.hash='#try-${p.code}'" aria-label="Try on ${p.name}">${garment(p)}</button>`).join("")}</div><span class="hint">Tap a piece to try it on</span></div>
+    </section>
+    <div class="issue-head"><h2>In this <i>drop</i></h2><div class="filters" id="filters"></div></div>
+    <div class="grid" id="grid"></div>
+  </div>`;
+}
+function drawGrid() {
+  const cats = ["All", "Dresses", "Tops", "Jeans", "Trousers", "Skirts", "Jackets", "Co-ords"];
+  $("#filters").innerHTML = cats.map((c) => `<button class="pill ${c === homeCat ? "on" : ""}" onclick="homeCat='${c}';drawGrid()">${c}</button>`).join("");
+  const items = homeCat === "All" ? P : P.filter((p) => p.cat === homeCat);
+  $("#grid").innerHTML = items.map((p) => { const n = totalLeft(p); return `<a class="look-card" href="#try-${p.code}"><div class="plate" style="background:${p.bg}">${garment(p)}<span class="no">${lookNo(p)}</span>${n <= 4 ? `<span class="left">${n} left</span>` : ""}<span class="try">Try it on</span></div><div class="cap"><span>${p.name}</span><b class="num">${rupees(p.price)}</b></div></a>`; }).join("");
+}
+
+/* ------------------------------------------------------------------ Story viewer */
+const DUR = 5200;
+let story = null, si = 0, elapsed = 0, last = 0, holding = false, raf = 0;
+function openStory(id) {
+  story = STORIES.find((s) => s.id === id) || STORIES[0]; si = 0;
+  seen.add(story.id); try { localStorage.setItem("hanger-cb-seen", JSON.stringify([...seen])); } catch {}
+  drawSlide(); $("#viewer").classList.add("on");
+  cancelAnimationFrame(raf); last = performance.now(); raf = requestAnimationFrame(loop);
+}
+function closeStory() { cancelAnimationFrame(raf); story = null; $("#viewer").classList.remove("on"); }
+function drawSlide() {
+  elapsed = 0;
+  const s = story.slides[si], p = typeof s === "string" ? byCode[s] : null;
+  $("#phone").innerHTML = `<div class="slide ${p ? "" : "text"}" style="background:${p ? `linear-gradient(165deg, ${shade(p.hex, .62)} 0%, ${shade(p.hex, .18)} 55%, ${shade(p.hex, -.45)} 100%)` : s.bg}">${p ? `<div class="fig">${garment(p)}</div><div class="shade"></div><div class="line">${LINES[p.code]}</div>` : `<div><h2>${s.title}</h2><p>${s.body}</p></div>`}</div>
+    <div class="bars">${story.slides.map((_, k) => `<span class="seg"><i style="width:${k < si ? 100 : 0}%"></i></span>`).join("")}</div>
+    <div class="vhead"><span class="av"><span>H</span></span><span class="whois"><b>thehanger</b> <span style="opacity:.75">${story.name}</span></span><button aria-label="Close story" onclick="location.hash='#home'"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    ${p ? `<button class="sticker" onclick="location.hash='#try-${p.code}'"><span class="dot"></span>${p.name} · ${rupees(p.price)} ›</button>` : ""}
+    <div class="tap" id="tap"></div>
+    <div class="vfoot"><button class="ask" onclick="toast('In the live shop this opens a WhatsApp chat with the store (design preview).')">${p ? `Ask about the ${p.name.toLowerCase()}…` : "Message the store…"}</button>${p ? `<button class="shop" onclick="location.hash='#try-${p.code}'">Try it on</button>` : `<a class="shop" href="#trial">See the trial room</a>`}</div>`;
+  const tap = $("#tap"); let x0 = 0, y0 = 0, t;
+  tap.onpointerdown = (e) => { x0 = e.clientX; y0 = e.clientY; holding = false; t = setTimeout(() => (holding = true), 220); };
+  tap.onpointerup = (e) => {
+    clearTimeout(t); const was = holding; holding = false;
+    if (e.clientY - y0 < -50 && p) return (location.hash = "#try-" + p.code);
+    if (was) return;
+    const r = tap.getBoundingClientRect(); (e.clientX - r.left) < r.width * .33 ? stepStory(-1) : stepStory(1);
+  };
+  tap.onpointercancel = () => { clearTimeout(t); holding = false; };
+}
+function loop(t) {
+  if (!story) return;
+  const dt = t - last; last = t;
+  if (!holding && !document.hidden) elapsed += dt;
+  const seg = document.querySelectorAll("#phone .seg i")[si]; if (seg) seg.style.width = Math.min(100, (elapsed / DUR) * 100) + "%";
+  if (elapsed >= DUR) return stepStory(1);
+  raf = requestAnimationFrame(loop);
+}
+function stepStory(d) {
+  cancelAnimationFrame(raf);
+  const k = STORIES.indexOf(story);
+  if (si + d >= story.slides.length) { if (k < STORIES.length - 1) return (location.hash = "#story-" + STORIES[k + 1].id); return (location.hash = "#home"); }
+  if (si + d < 0) { if (k > 0) return (location.hash = "#story-" + STORIES[k - 1].id); si = 0; } else si += d;
+  drawSlide(); last = performance.now(); raf = requestAnimationFrame(loop);
+}
+
+/* ------------------------------------------------------------------ Fitting room */
+const VB = "0 0 300 410";
+const FIGURE = `<svg viewBox="${VB}" aria-hidden="true"><g fill="var(--form)"><ellipse cx="150" cy="46" rx="19" ry="23"/><path d="M142 64 L158 64 L161 92 L139 92 Z"/><path d="M110 92 Q96 96 92 122 L80 236 Q79 247 87 247 L93 245 L103 130 Q107 113 114 104 Z"/><path d="M190 92 Q204 96 208 122 L220 236 Q221 247 213 247 L207 245 L197 130 Q193 113 186 104 Z"/><path d="M108 222 L148 222 L145 330 L141 390 L126 392 L120 330 Z"/><path d="M152 222 L192 222 L180 330 L174 392 L159 390 L155 330 Z"/><path d="M112 88 Q150 99 188 88 L194 100 Q197 140 187 178 Q195 200 196 228 L104 228 Q105 200 113 178 Q103 140 106 100 Z"/></g><g fill="var(--ink)" opacity=".85"><ellipse cx="132" cy="395" rx="13" ry="5"/><ellipse cx="167" cy="395" rx="13" ry="5"/></g></svg>`;
+let look = { top: "TOP-040", bottom: "BTM-012" }, focus = "TOP-040", fresh = "", sizes = {}, sideTab = "picks", railCat = "dress", showWhy = "";
+const ORDER = ["bottom", "dress", "top", "layer"];
+const worn = (l = look) => ORDER.map((k) => l[k]).filter(Boolean);
+function sizeFor(code) {
+  const p = byCode[code];
+  if (sizes[code] && p.stock[sizes[code]] != null) return sizes[code];
+  const b = bestSize(p, cust(), mySize);
+  return b ? b.size : sizesOf(p)[0];
+}
+function wear(code) {
+  const slot = SLOT_OF(byCode[code]);
+  if (slot === "layer") look.layer = look.layer === code ? null : code;
+  else if (slot === "dress") { look.dress = code; look.top = null; look.bottom = null; }
+  else { look[slot] = code; look.dress = null; if (!look.top) look.top = "TOP-052"; if (!look.bottom) look.bottom = "JNS-030"; }
+  focus = code; fresh = code; showWhy = "";
+  drawRoom();
+}
+function takeOff(code) {
+  const slot = SLOT_OF(byCode[code]);
+  look[slot] = null;
+  if (slot === "dress") { look.top = "TOP-052"; look.bottom = "JNS-030"; }
+  if (!look.dress && !look.top && !look.bottom) look.top = "TOP-052";
+  if (focus === code) focus = worn()[0];
+  fresh = ""; drawRoom();
+}
+const lookTotal = () => worn().reduce((a, c) => a + byCode[c].price, 0);
+function room() {
+  return `<div class="wrap room">
+    <div class="mirror-col">
+      <div class="scene"><span class="curtain l"></span><span class="curtain r"></span><div class="mirror"><div class="glass"><div class="stack" id="stack"></div></div><span class="mirror-tag" id="mirrorTag"></span></div></div>
+      <div class="card" id="lookCard"></div>
+    </div>
+    <div class="side-col">
+      <div><div class="label mute">The fitting room</div><h1 style="font-size:clamp(36px,4.2vw,56px);line-height:1;margin-top:6px">Try it on. We'll bring<br>what goes with it.</h1></div>
+      <div class="tabs" role="tablist" id="sideTabs"></div>
+      <div id="sideBody"></div>
+    </div>
+  </div>`;
+}
+function drawRoom() {
+  const w = worn();
+  $("#stack").innerHTML = FIGURE + w.map((c) => garment(byCode[c], { viewBox: VB, hanger: false, cls: c === fresh ? "fresh" : "" })).join("");
+  $("#mirrorTag").innerHTML = `<b>${w.length} piece${w.length > 1 ? "s" : ""}</b> · ${rupees(lookTotal())}`;
+  $("#lookCard").innerHTML = `<div class="look-top"><h2>On the form</h2><span class="look-total num">${rupees(lookTotal())}</span></div>
+    ${w.map((c) => { const p = byCode[c], s = sizeFor(c), n = p.stock[s]; return `<div class="worn-row"><span class="sw" style="background:${p.bg}">${garment(p, { label: false, viewBox: "60 70 180 200" })}</span>
+      <span><b>${p.name}</b><small class="${n <= 1 ? "warn" : ""}">${rupees(p.price)} · ${n ? (n <= 2 ? `${n} left in ${s}` : fitWords(p)) : `${s} is sold out`}</small> <button class="mute" style="font-size:12.5px;text-decoration:underline" onclick="focus='${c}';sideTab='about';drawSide()">Details</button></span>
+      <select class="sel" aria-label="Size for ${p.name}" onchange="sizes['${c}']=this.value;drawRoom()">${sizesOf(p).map((k) => `<option value="${k}" ${k === s ? "selected" : ""} ${p.stock[k] ? "" : "disabled"}>${k}${p.stock[k] ? "" : " (sold out)"}</option>`).join("")}</select>
+      <button class="x" aria-label="Take off ${p.name}" onclick="takeOff('${c}')">✕</button></div>`; }).join("")}
+    <div class="look-actions"><button class="btn dark" onclick="addLook()">Add the whole look · ${rupees(lookTotal())}</button><button class="btn small" onclick="sendModal('online')">Send to WhatsApp</button><button class="btn small" onclick="toast('In the live shop the store keeps the whole look aside for a day (design preview).')">Try at store</button></div>`;
+  drawSide();
+}
+function drawSide() {
+  const tabs = [["picks", "Picked for you"], ["rail", "The rail"], ["about", "About this piece"], ["how", "How picks work"]];
+  $("#sideTabs").innerHTML = tabs.map(([k, n]) => `<button class="tab ${k === sideTab ? "on" : ""}" onclick="sideTab='${k}';drawSide()">${n}</button>`).join("");
+  const box = $("#sideBody");
+  if (sideTab === "rail") {
+    const cats = [["dress", "Dresses & sets"], ["top", "Tops"], ["bottom", "Bottoms"], ["layer", "Layers"]];
+    box.innerHTML = `<div class="rail-tabs">${cats.map(([k, n]) => `<button class="pill ${k === railCat ? "on" : ""}" onclick="railCat='${k}';drawSide()">${n}</button>`).join("")}</div>
+      <div class="rail">${P.filter((p) => SLOT_OF(p) === railCat).map((p) => `<button class="piece" onclick="wear('${p.code}')" aria-label="Put on ${p.name}"><div class="art">${garment(p, { label: false })}</div>${worn().includes(p.code) ? `<span class="on-tag">On the form</span>` : ""}<div class="meta"><span>${p.name}</span><b class="num">${rupees(p.price)}</b></div></button>`).join("")}</div>`;
+    return;
+  }
+  if (sideTab === "about") {
+    const p = byCode[focus] || byCode[worn()[0]];
+    box.innerHTML = `<div class="card about"><div class="label mute">Look ${lookNo(p)} · ${p.cat}${p.isNew ? " · new this drop" : ""}</div><h2 style="font-size:36px;margin-top:6px">${p.name}</h2><b class="num" style="font-size:20px">${rupees(p.price)}</b> <span class="mute" style="font-size:13px">GST included</span><p style="font-family:var(--story);font-size:21px;line-height:1.35;margin:12px 0 0">${p.blurb}</p>
+      <dl><dt>Fit</dt><dd>${fitWords(p)}</dd><dt>Fabric</dt><dd>${p.fabricText}</dd><dt>Colour</dt><dd>${p.colour}</dd><dt>In stock</dt><dd>${sizesOf(p).map((k) => `${k}: ${p.stock[k] || "sold out"}`).join(" · ")}</dd><dt>Delivery</dt><dd>Free above ₹1,999 · cash on delivery · size exchange in 7 days</dd></dl></div>`;
+    return;
+  }
+  if (sideTab === "how") { box.innerHTML = howCard(); return; }
+  const c = cust();
+  const rows = picksFor(worn(), c, mySize, weights);
+  const complete = rows.filter((r) => r.kind === "complete").slice(0, 3), swap = rows.filter((r) => r.kind === "swap").slice(0, 3);
+  box.innerHTML = `<div class="card who">
+      <div class="who-row"><span class="label mute" style="margin-right:4px">Shopping as</span>${Object.values(CUSTOMERS).map((k) => `<button class="pill ${k.id === custId ? "on" : ""}" onclick="setCust('${k.id}')">${k.name}${k.example ? " (example)" : ""}</button>`).join("")}</div>
+      ${c.band ? `<div><span class="example">Example returning customer</span><ul class="history">${c.history.map((h) => `<li>${h}</li>`).join("")}</ul></div>` : `<div class="who-row"><span class="label mute" style="margin-right:4px">Your size</span>${["XS", "S", "M", "L", "XL"].map((k) => `<button class="pill ${k === mySize ? "on" : ""}" onclick="mySize='${k}';sizes={};keepPrefs();drawRoom()">${k}</button>`).join("")}</div>`}
+    </div>
+    <div class="card">
+      ${complete.length ? `<div class="picks-head"><h3>Complete the look</h3><span class="mute" style="font-size:13px">best of ${rows.filter((r) => r.kind === "complete").length} in stock</span></div>${complete.map(pickRow).join("")}` : ""}
+      ${swap.length ? `<div class="picks-head" style="margin-top:14px"><h3>Or swap in</h3><span class="mute" style="font-size:13px">best of ${rows.filter((r) => r.kind === "swap").length}</span></div>${swap.map(pickRow).join("")}` : ""}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn dark small" onclick="sendModal('online')">Send these picks on WhatsApp</button><button class="btn small" onclick="sideTab='how';drawSide()">Change how picks are scored</button></div>
+    </div>`;
+}
+function pickRow(r) {
+  const p = r.p, top = PARTS.map((k) => k.key).sort((a, b) => weights[b] * r.parts[b] - weights[a] * r.parts[a]).slice(0, 3);
+  return `<div class="pick">${art(p)}<div style="min-width:0"><b class="nm">${p.name} · <span class="num">${rupees(p.price)}</span></b><span class="sub">${r.kind === "complete" ? { top: "Adds a top", bottom: "Adds a bottom", layer: "Adds a layer" }[r.slot] || "" : "Instead of what's on"} · size ${r.fit.size}${r.fit.n <= 2 ? `, ${r.fit.n} left` : ""}</span>
+    <div class="chips">${top.map((k) => `<span class="chip ${r.parts[k] < .3 ? "warn" : ""}">${r.why[k]}</span>`).join("")}</div>
+    <div class="pick-btns"><button class="btn dark small" onclick="wear('${p.code}')">Try it on</button><button class="btn small" onclick="showWhy=showWhy==='${p.code}'?'':'${p.code}';drawSide()">${showWhy === p.code ? "Hide" : "Why this?"}</button></div></div>
+    <div class="score" style="--s:${r.score}" title="Pick score out of 100"><span class="num">${r.score}</span></div>
+    ${showWhy === p.code ? `<div class="why">${PARTS.map((k) => `<div class="why-row"><span>${k.name}</span><span class="bar"><i style="width:${r.parts[k.key] * 100}%"></i></span><span class="t">${r.why[k.key]}</span><span class="num mute">${Math.round(weights[k.key] * r.parts[k.key])}/${weights[k.key]}</span></div>`).join("")}<div class="mute">Score = the points above out of the total weight (${PARTS.reduce((a, k) => a + weights[k.key], 0)}), shown out of 100.</div></div>` : ""}
+  </div>`;
+}
+function setCust(id) { custId = id; sizes = {}; keepPrefs(); drawRoom(); }
+function howCard() {
+  return `<div class="card"><h3 style="font-size:26px">How the picks are made</h3>
+    <p class="mute" style="margin:6px 0 12px">Every piece in stock gets a score out of 100 from six parts. Nothing is a hard yes or no, except that a piece with no size left cannot be offered. The owner sets how much each part counts. Move a slider and the picks change.</p>
+    <div class="weights">${PARTS.map((k) => `<div class="w-row"><label for="w-${k.key}">${k.name}</label><input type="range" id="w-${k.key}" min="0" max="40" value="${weights[k.key]}" oninput="weights['${k.key}']=+this.value;this.nextElementSibling.textContent=this.value;keepPrefs()" onchange="drawRoomOrTrial()"><span class="num">${weights[k.key]}</span></div>`).join("")}</div>
+    <button class="btn small" style="margin-top:12px" onclick="weights=Object.fromEntries(PARTS.map((k)=>[k.key,k.w]));keepPrefs();drawRoomOrTrial()">Back to the starting weights</button>
+    <ol class="steps-list">
+      <li><b>Her size in stock.</b> Her size from her past orders and exchanges, or what she picks. A piece that runs small offers one size up. Live stock decides: 2 or more left is full marks, the last one a little less, the next size if hers is sold out.</li>
+      <li><b>Styled together.</b> The pairs the staff mark in the catalogue ("goes with").</li>
+      <li><b>Colours.</b> Neutrals go with anything; some colour pairs work better than others.</li>
+      <li><b>Occasion.</b> Brunch, work, date night or getaway, shared with what is on the form.</li>
+      <li><b>Her taste.</b> Her usual spend and colours from past orders; anything she returned scores zero.</li>
+      <li><b>The shop's push.</b> New pieces, and pieces on the rail for 45 days or more, get a lift.</li>
+    </ol>
+    <p class="mute" style="font-size:13.5px">Later, once there are a few hundred orders, "bought together" and "kept or returned" from real orders join as two more parts.</p></div>`;
+}
+function drawRoomOrTrial() { if ($("#stack")) drawRoom(); else if ($("#trialPicks")) drawTrial(); }
+function addLook() {
+  const out = [];
+  for (const c of worn()) { const m = bagAdd(c, sizeFor(c)); if (m) out.push(m); }
+  updateN(); if (out.length) toast(out[0]); openBag();
+}
+
+/* ------------------------------------------------------------------ Trial room (staff tablet in the store) */
+let trialCust = "riya", inRoom = ["TOP-014", "SKT-008"], brought = new Set(), trialSize = "M";
+function trialPage() {
+  return `<div class="wrap trial">
+    <div style="display:grid;gap:16px">
+      <div><span class="staff-tag">Staff · store tablet</span><h1>Trial room 2,<br>MG Road</h1><p class="mute" style="max-width:44ch">She takes pieces in, staff scan the tags, and the screen says what to bring her next: from the store floor, in her size. One tap sends the picks to her phone.</p></div>
+      <div class="card who">
+        <div class="who-row"><span class="label mute" style="margin-right:4px">Customer</span><button class="pill ${trialCust === "riya" ? "on" : ""}" onclick="trialCust='riya';drawTrial()">Riya (example, by phone number)</button><button class="pill ${trialCust === "new" ? "on" : ""}" onclick="trialCust='new';drawTrial()">Walk-in</button></div>
+        <div id="trialWho"></div>
+      </div>
+      <div class="card"><h3 style="font-size:24px">In the room now</h3><div class="inroom" id="inRoom"></div>
+        <div class="scan"><select class="sel" id="scanSel" aria-label="Scan a tag">${P.map((p) => `<option value="${p.code}">${p.code} · ${p.name}</option>`).join("")}</select><button class="btn dark small" onclick="scanIn()">Scan tag</button></div>
+        <p class="mute" style="font-size:13px;margin:8px 0 0">In the shop this is the barcode scanner the counter already uses.</p></div>
+    </div>
+    <div class="card" id="trialPicks"></div>
+  </div>`;
+}
+function drawTrial() {
+  const c = CUSTOMERS[trialCust];
+  $("#trialWho").innerHTML = c.band ? `<ul class="history">${c.history.map((h) => `<li>${h}</li>`).join("")}</ul>` : `<div class="who-row"><span class="label mute">Her size</span>${["XS", "S", "M", "L", "XL"].map((k) => `<button class="pill ${k === trialSize ? "on" : ""}" onclick="trialSize='${k}';drawTrial()">${k}</button>`).join("")}</div>`;
+  $("#inRoom").innerHTML = inRoom.length ? inRoom.map((code) => { const p = byCode[code]; return `<div class="worn-row" style="grid-template-columns:44px minmax(0,1fr) auto"><span class="sw" style="background:${p.bg}">${garment(p, { label: false, viewBox: "60 70 180 200" })}</span><span><b>${p.name}</b><small>${p.code} · ${rupees(p.price)}</small></span><button class="x" aria-label="Out of the room" onclick="inRoom=inRoom.filter((x)=>x!=='${code}');drawTrial()">✕</button></div>`; }).join("") : `<p class="mute">Nothing scanned yet.</p>`;
+  const look = {};
+  inRoom.forEach((code) => (look[SLOT_OF(byCode[code])] = code));
+  const rows = picksFor(Object.values(look), c, trialSize, weights, "store").slice(0, 6);
+  $("#trialPicks").innerHTML = `<div class="picks-head"><h3 style="font-size:28px">Bring her next</h3><span class="mute" style="font-size:13px">from the store floor, best first</span></div>
+    ${rows.length ? rows.map((r) => `<div class="fetch">${art(r.p)}<div style="min-width:0"><b style="font-weight:600">${r.p.name} · size ${r.fit.size}</b> <span class="mute num" style="font-size:13px">${rupees(r.p.price)}</span><div class="chips">${PARTS.map((k) => k.key).sort((a, b) => weights[b] * r.parts[b] - weights[a] * r.parts[a]).slice(0, 2).map((k) => `<span class="chip">${r.why[k]}</span>`).join("")}<span class="chip">${r.fit.n} on the floor in ${r.fit.size}</span></div></div>
+      <div style="display:grid;gap:6px;justify-items:end"><span class="score" style="--s:${r.score}"><span class="num">${r.score}</span></span><button class="check ${brought.has(r.p.code) ? "on" : ""}" onclick="toggleBring('${r.p.code}')">${brought.has(r.p.code) ? "✓ Brought" : "Bring"}</button></div></div>`).join("") : `<p class="mute">Scan what she took in to see picks.</p>`}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn dark" onclick="sendModal('store')">Send her these on WhatsApp</button><button class="btn" onclick="sideTabTo('how')">Change how picks are scored</button></div>
+    <p class="mute" style="font-size:13.5px;margin:10px 0 0">If she leaves without buying, the message keeps the look on her phone with a link to buy it online, delivered free.</p>`;
+}
+function scanIn() { const code = $("#scanSel").value; if (!inRoom.includes(code)) inRoom.push(code); drawTrial(); }
+function toggleBring(code) { brought.has(code) ? brought.delete(code) : brought.add(code); if (brought.has(code) && !inRoom.includes(code)) inRoom.push(code); drawTrial(); }
+function sideTabTo(t) { $("#modal").innerHTML = howCard() + `<div style="margin-top:12px"><button class="btn dark" onclick="closeAll();drawTrial()">Done</button></div>`; $("#modal").classList.add("on"); $("#scrim").classList.add("on"); }
+
+/* ------------------------------------------------------------------ Sending the picks */
+function sendModal(where) {
+  const c = where === "store" ? CUSTOMERS[trialCust] : cust();
+  let lookCodes, picks;
+  if (where === "store") { const l = {}; inRoom.forEach((code) => (l[SLOT_OF(byCode[code])] = code)); lookCodes = Object.values(l); picks = picksFor(lookCodes, c, trialSize, weights, "store").slice(0, 3); }
+  else { lookCodes = worn(); picks = picksFor(lookCodes, c, mySize, weights).slice(0, 3); }
+  const name = c.band ? c.name : "there";
+  const anchor = byCode[lookCodes[lookCodes.length - 1]] || P[0];
+  $("#modal").innerHTML = `<div class="send">
+    <div><div class="label mute">What she receives · preview</div>
+      <div class="chat" style="margin-top:10px"><div class="chat-top"><span class="av">H</span><div><b>The Hanger</b><br><span class="mute" style="font-size:12px">Business account</span></div></div>
+        <div class="bubble">Hi ${name}! The ${anchor.name.toLowerCase()} looks lovely with these. All three are in your size and in stock today:
+          <div class="prods">${picks.map((r) => `<div class="prod">${art(r.p)}<div><b>${r.p.name}</b><br>${rupees(r.p.price)} · size ${r.fit.size}${r.fit.n <= 2 ? ` · ${r.fit.n} left` : ""}</div></div>`).join("")}</div>
+          <div class="acts"><span>View items</span><span>Keep aside at MG Road</span><span>Talk to the store</span></div></div>
+      </div></div>
+    <div><h2 style="font-size:32px">How this is sent</h2>
+      <ol class="steps-list">
+        <li>The picks go as a WhatsApp <b>product message</b> from the shop's Meta catalogue, which the platform already keeps in sync. She opens the pieces, picks a size and adds them to a cart inside WhatsApp.</li>
+        <li>Her cart comes back to the platform's WhatsApp order flow that is already built: address, then UPI link or cash on delivery, then the GST invoice.</li>
+        <li>WhatsApp's rules: she must have agreed to messages (asked once at the counter or checkout). Within 24 hours of her last message it is a normal reply; after that it goes as a pre-approved marketing template, which Meta charges for per message.</li>
+        <li>Sent automatically when she saves a look or leaves the fitting room without buying (once, after an hour), or by staff from the trial room screen.</li>
+      </ol>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap"><button class="btn dark" onclick="closeAll();toast('Design preview: nothing was sent.')">Send (preview only)</button><button class="btn" onclick="closeAll()">Close</button></div></div>
+  </div>`;
+  $("#modal").classList.add("on"); $("#scrim").classList.add("on");
+}
+
+/* ------------------------------------------------------------------ Bag, checkout */
+function updateN() { $("#bagN").textContent = bagQty(); }
+function closeAll() { ["#panel", "#modal", "#scrim"].forEach((s) => $(s).classList.remove("on")); }
+function openBag() { drawBag(); $("#panel").classList.add("on"); $("#scrim").classList.add("on"); }
+function drawBag() {
+  const t = bagTotal(), d = deliveryFor(t), away = Math.max(0, FREE_SHIP - t);
+  $("#panel").innerHTML = `<div class="panel-head"><h2>Your bag</h2><button class="x" aria-label="Close bag" onclick="closeAll()">✕</button></div>
+  <div class="panel-body">${bag.length ? bag.map((l, i) => { const p = byCode[l.code]; return `<div class="b-row">${art(p)}<div><b style="font-weight:600">${p.name}</b><div class="mute" style="font-size:13px">Size ${l.size}</div><div class="qty"><button aria-label="One less" onclick="bagStep(${i},-1);updateN();drawBag()">−</button><span class="num">${l.qty}</span><button aria-label="One more" onclick="bagStep(${i},1);updateN();drawBag()">+</button></div></div><b class="num">${rupees(p.price * l.qty)}</b></div>`; }).join("") : `<div style="padding:50px 0;text-align:center"><h3 style="font-size:28px">Nothing in the bag yet</h3><p class="mute">Try a piece on and add the whole look in one tap.</p><a class="btn dark" href="#room" onclick="closeAll()">Open the fitting room</a></div>`}</div>
+  ${bag.length ? `<div class="panel-foot"><div class="mute" style="font-size:13.5px">${away ? `${rupees(away)} more for free delivery` : "Free delivery unlocked"}</div><div class="meter"><i style="width:${Math.min(100, (t / FREE_SHIP) * 100)}%"></i></div><div class="row"><span>Delivery</span><span class="num">${d ? rupees(d) : "Free"}</span></div><div class="row total"><span>Total, GST included</span><span class="num">${rupees(t + d)}</span></div><a class="btn dark block" style="margin-top:8px" href="#checkout" onclick="closeAll()">Checkout</a></div>` : ""}`;
+}
+let pay = "upi", lastOrder = null;
+function checkoutPage() {
+  if (!bag.length) return `<div class="wrap" style="padding:80px 0;text-align:center"><h1 style="font-size:44px">Your bag is empty</h1><p><a class="btn dark" href="#room">Open the fitting room</a></p></div>`;
+  pay = "upi";
+  return `<div class="wrap co"><div>
+      <h1 style="font-size:clamp(40px,5vw,60px);margin-bottom:14px">Checkout</h1>
+      <p class="demo">Design preview: no code is sent, no payment is taken and no order is placed. Try it with made-up details.</p>
+      <div class="card"><h3>Your number</h3><div class="field">WhatsApp number<input class="input" id="coPhone" inputmode="tel" maxlength="10" placeholder="10-digit mobile number" /></div><label class="mute" style="font-size:13.5px;display:flex;gap:8px;align-items:flex-start"><input type="checkbox" id="coOpt" checked style="margin-top:4px" /> Send me order updates and picks for my size on WhatsApp. I can stop them any time.</label></div>
+      <div class="card"><h3>Delivery address</h3><div class="two"><div class="field">Full name<input class="input" id="coName" /></div><div class="field">Pincode<input class="input" id="coPin" inputmode="numeric" maxlength="6" placeholder="452010" oninput="pinFill()" /></div></div><div class="field">House, street, area<input class="input" id="coAddr" /></div><div class="two"><div class="field">City<input class="input" id="coCity" /></div><div class="field">State<input class="input" id="coState" /></div></div></div>
+      <div class="card"><h3>Payment</h3><div class="pays">${[["upi", "UPI", "Any UPI app"], ["card", "Card", "Debit or credit"], ["cod", "Cash on delivery", "Pay when it arrives"]].map(([k, a, b]) => `<button type="button" class="pay ${k === "upi" ? "on" : ""}" data-k="${k}" onclick="setPay('${k}')"><span>${a}<small>${b}</small></span></button>`).join("")}</div></div>
+    </div><aside class="card sum-card" id="sumCard"></aside></div>`;
+}
+function setPay(k) { pay = k; document.querySelectorAll(".pay").forEach((b) => b.classList.toggle("on", b.dataset.k === k)); drawSum(); }
+function pinFill() { const v = $("#coPin").value.replace(/\D/g, ""), pl = pinPlace(v); if (pl && pl[0]) { $("#coCity").value = pl[0]; $("#coState").value = pl[1]; } drawSum(); }
+function drawSum() {
+  const t = bagTotal(), d = deliveryFor(t), pin = ($("#coPin")?.value || "").replace(/\D/g, "");
+  $("#sumCard").innerHTML = `<h3>Your order</h3>${bag.map((l) => { const p = byCode[l.code]; return `<div class="row" style="padding:6px 0;border-bottom:1px solid var(--line)"><span>${p.name} · ${l.size}${l.qty > 1 ? ` × ${l.qty}` : ""}</span><span class="num">${rupees(p.price * l.qty)}</span></div>`; }).join("")}
+    <div class="row" style="padding-top:8px"><span>Delivery</span><span class="num">${d ? rupees(d) : "Free"}</span></div><div class="row mute"><span>GST included</span><span class="num">${rupees(Math.round(t - t / 1.05))}</span></div><div class="row total"><span>Total</span><span class="num">${rupees(t + d)}</span></div>
+    <p class="mute" style="font-size:13.5px">${/^\d{6}$/.test(pin) ? `Arrives <b style="color:var(--ink)">${etaFor(pin).toLowerCase()}</b>` : "Add your pincode to see the delivery day."}</p>
+    <button class="btn dark block" onclick="placeOrder()">${pay === "cod" ? "Place order" : `Pay ${rupees(t + d)}`}</button>`;
+}
+function placeOrder() {
+  const phone = $("#coPhone").value.replace(/\D/g, ""), pin = $("#coPin").value.replace(/\D/g, "");
+  if (phone.length !== 10) return toast("Add a 10-digit mobile number.");
+  if (!$("#coName").value.trim() || !$("#coAddr").value.trim() || pin.length !== 6) return toast("Add your name, address and a 6-digit pincode.");
+  lastOrder = { n: 1000 + Math.floor(Math.random() * 9000), eta: etaFor(pin), total: bagTotal() + deliveryFor(bagTotal()), names: bag.map((l) => byCode[l.code].name) };
+  bag = []; saveBag(); updateN(); location.hash = "#thanks";
+}
+function thanksPage() {
+  if (!lastOrder) return `<div class="wrap" style="padding:80px 0;text-align:center"><h1 style="font-size:44px">No order yet</h1><p><a class="btn dark" href="#room">Open the fitting room</a></p></div>`;
+  return `<div class="wrap" style="padding:70px 0 90px;text-align:center"><div class="label mute">Order HWH-${lastOrder.n} · ${rupees(lastOrder.total)} · design preview</div><h1 style="font-size:clamp(60px,10vw,130px);line-height:.9;margin-top:14px">It's <i style="font-family:var(--story)">yours.</i></h1><p style="font-size:18px;max-width:44ch;margin:16px auto 24px">${lastOrder.names.join(", ")}. Packed by hand at MG Road and at your door ${lastOrder.eta.toLowerCase()}. Tracking comes on WhatsApp.</p><a class="btn dark" href="#home">Back to the drop</a></div>`;
+}
+
+/* ------------------------------------------------------------------ Router */
+function route() {
+  const [page, sub] = parseHash();
+  closeAll();
+  if (page === "story") { if (!$("#grid")) { $("#main").innerHTML = home(); drawGrid(); } return openStory(sub); }
+  closeStory();
+  const main = $("#main");
+  if (page === "try" && byCode[sub]) { const p = byCode[sub]; if (!$("#stack")) main.innerHTML = room(); sideTab = "picks"; if (SLOT_OF(p) === "layer" && look.layer === p.code) { focus = p.code; drawRoom(); } else wear(p.code); }
+  else if (page === "room") { main.innerHTML = room(); drawRoom(); }
+  else if (page === "trial") { main.innerHTML = trialPage(); drawTrial(); }
+  else if (page === "checkout") { main.innerHTML = checkoutPage(); if (bag.length) drawSum(); }
+  else if (page === "thanks") main.innerHTML = thanksPage();
+  else { main.innerHTML = home(); drawGrid(); }
+  document.querySelectorAll("nav.main a").forEach((a) => a.classList.toggle("on", a.dataset.nav === (page === "try" ? "room" : page || "home")));
+  window.scrollTo({ top: 0 });
+}
+window.addEventListener("hashchange", route);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") { if (story) location.hash = "#home"; closeAll(); }
+  if (story && e.key === "ArrowRight") stepStory(1);
+  if (story && e.key === "ArrowLeft") stepStory(-1);
+});
+updateN();
+route();
+
+/* ---------------------------------------------------------------- Theme switcher */
+const LOOKS = [
+  { id: "", name: "Curtain Call", note: "The current one: fitting-room green and brass, Gloock serif.", sw: ["#1f3a31", "#b4853f", "#e3e9e4", "#f0b9a6"], font: "Gloock" },
+  { id: "denim", name: "Indigo Denim", note: "Workwear indigo with rust stitching. Sturdy, everyday, jeans-first.", sw: ["#22325e", "#c2622d", "#e6e9f0", "#f0a877"], font: "Bricolage Grotesque" },
+  { id: "blush", name: "Blush Atelier", note: "Powder pink, cocoa and rose gold. Soft, bridal-season, couture serif.", sw: ["#8c4a52", "#c99a7a", "#f6e9e6", "#f1c4c0"], font: "Cormorant Garamond" },
+  { id: "noir", name: "Noir Party", note: "Black and champagne gold, after dark. For the party and date edits.", sw: ["#0f0e10", "#d4b06a", "#2a2530", "#e8b4a6"], font: "Bodoni Moda" },
+  { id: "terracotta", name: "Terracotta Sun", note: "Clay, sand and olive. Warm, earthy, handmade cotton feel.", sw: ["#a8492c", "#6f7a3a", "#efe4d6", "#eab08f"], font: "Fraunces" },
+  { id: "gallery", name: "Gallery White", note: "Museum white, black type, one red. The clothes do all the talking.", sw: ["#0a0a0a", "#e0261b", "#ffffff", "#efefef"], font: "Syne" },
+  { id: "citrus", name: "Citrus Pop", note: "Cobalt and lime for the college crowd. Loud, young, Instagram-native.", sw: ["#2338d6", "#c7f03a", "#f3f5e8", "#ff3d7f"], font: "Unbounded" },
+  { id: "lilac", name: "Lilac Haze", note: "Lavender and plum. Gentle, romantic, festive-but-western.", sw: ["#4b3474", "#b892d8", "#ece8f4", "#f2c4dc"], font: "Young Serif" },
+];
+let lookIdx = 0;
+try { const saved = localStorage.getItem("hanger-look"); const i = LOOKS.findIndex((l) => l.id === saved); if (i > 0) lookIdx = i; } catch (e) { /* storage blocked */ }
+function setLook(i) {
+  lookIdx = (i + LOOKS.length) % LOOKS.length;
+  const look = LOOKS[lookIdx];
+  if (look.id) document.documentElement.dataset.look = look.id; else delete document.documentElement.dataset.look;
+  try { localStorage.setItem("hanger-look", look.id); } catch (e) { /* storage blocked */ }
+  drawLooks();
+}
+let looksOpen = false;
+function drawLooks() {
+  const look = LOOKS[lookIdx];
+  const box = document.getElementById("looks");
+  box.innerHTML = `${looksOpen ? `<div class="looks-panel" role="dialog" aria-label="Themes">
+      <h4>8 themes · same shop, same picks</h4>
+      ${LOOKS.map((l, i) => `<button class="look-opt${i === lookIdx ? " on" : ""}" onclick="setLook(${i})" aria-pressed="${i === lookIdx}">
+        <span class="chips4">${l.sw.map((c) => `<i style="background:${c}"></i>`).join("")}</span>
+        <span><b style="font-family:'${l.font}',Georgia,serif">${i + 1}. ${l.name}</b><span class="d">${l.note}</span></span></button>`).join("")}
+      <div class="looks-step"><button onclick="setLook(lookIdx-1)">← Previous</button><button onclick="setLook(lookIdx+1)">Next →</button></div>
+    </div>` : ""}
+    <button class="looks-tab" onclick="looksOpen=!looksOpen;drawLooks()" aria-expanded="${looksOpen}"><span class="sw" style="background:linear-gradient(135deg,${look.sw[0]} 50%,${look.sw[1]} 50%)"></span>Theme ${lookIdx + 1}/8 · ${look.name}</button>`;
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && looksOpen) { looksOpen = false; drawLooks(); } });
+setLook(lookIdx);
+</script>

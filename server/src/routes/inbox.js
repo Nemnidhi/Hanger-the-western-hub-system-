@@ -35,6 +35,7 @@ export function serializeMessage(message) {
     media: message.media?.id ? { mimeType: message.media.mimeType, caption: message.media.caption, filename: message.media.filename } : null,
     location: message.type === "location" ? message.data : null,
     status: message.status,
+    purpose: message.purpose || "chat",
     error: message.error?.text ? message.error : null,
     at: message.direction === "in" ? message.at : message.createdAt,
     sentAt: message.sentAt,
@@ -52,6 +53,9 @@ function serializeConversation(conversation, contact, lastMessage, now) {
     unread: conversation.unread,
     lastMessageAt: conversation.lastMessageAt,
     window: replyWindow(conversation.lastInboundAt, now),
+    // The WhatsApp stylist: quiet in this chat until this time (handed over or turned off), and why.
+    stylistOffUntil: conversation.stylistOffUntil && conversation.stylistOffUntil > now ? conversation.stylistOffUntil : null,
+    stylistNote: conversation.stylistOffUntil && conversation.stylistOffUntil > now ? conversation.stylistNote || "" : "",
     lastMessage: lastMessage
       ? { direction: lastMessage.direction, type: lastMessage.type, text: String(lastMessage.text || "").slice(0, 140), status: lastMessage.status }
       : null,
@@ -197,12 +201,15 @@ export function createInboxRouter({ config, logger, client, realtime }) {
     ...write,
     route(async (req, res) => {
       const conversation = await loadConversation(req);
-      const body = parseBody(z.object({ status: z.enum(["open", "waiting", "closed"]).optional(), assignedTo: z.string().max(40).optional() }), req);
+      const body = parseBody(z.object({ status: z.enum(["open", "waiting", "closed"]).optional(), assignedTo: z.string().max(40).optional(), stylist: z.enum(["on", "off"]).optional() }), req);
       if (body.assignedTo) {
         const assignee = mongoose.isValidObjectId(body.assignedTo) && (await User.findOne({ _id: body.assignedTo, tenantId: req.tenantId, status: "active" }));
         if (!assignee) throw httpError(400, "That person is not on the team.", "BAD_ASSIGNEE");
       }
-      await Conversation.updateOne({ _id: conversation._id }, { $set: body });
+      const { stylist, ...fields } = body;
+      // Off: quiet in this chat for 30 days (staff are handling it); on: it may answer again now.
+      if (stylist) Object.assign(fields, stylist === "off" ? { stylistOffUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), stylistNote: `turned off by ${req.user.name || "staff"}` } : { stylistOffUntil: null, stylistNote: "" });
+      await Conversation.updateOne({ _id: conversation._id }, { $set: fields });
       await audit({ req, action: "conversation.updated", targetType: "conversation", targetId: conversation._id, meta: body, logger });
       const fresh = await Conversation.findById(conversation._id);
       const contact = await Contact.findById(fresh.contactId);

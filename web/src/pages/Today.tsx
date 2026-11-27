@@ -3,6 +3,7 @@ import { rupees } from "../format";
 import { useLive } from "../live";
 import { useLoad, Notice } from "../ui";
 import type { Summary } from "../types";
+import { BriefCard } from "./Brief";
 
 // The day at a glance: what is waiting for someone, and today's sales.
 export function Today({ me }: { me: Me }) {
@@ -49,6 +50,8 @@ export function Today({ me }: { me: Me }) {
               <a href="#orders/list/confirmed">Open orders</a>
             </Notice>
           )}
+
+          {can(me, "reports:read") && <BriefCard me={me} />}
 
           <h2 className="section-title">Waiting for someone</h2>
           <div className="todo-grid">

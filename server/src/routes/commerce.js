@@ -1,14 +1,15 @@
 import express from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
-import { Invoice, Location, Order, ORDER_STATUSES, Settings, Sku, StockLevel, StockMove, Style, Supplier, getSettings } from "../models/index.js";
+import { Invoice, Location, Order, ORDER_STATUSES, Return, Settings, Sku, StockLevel, StockMove, Style, Supplier, getSettings, Transfer } from "../models/index.js";
 import { requireAuth, requirePermission } from "../auth/middleware.js";
 import { withTransaction, isDuplicateKeyError } from "../db.js";
 import { audit } from "../audit.js";
 import { httpError, parseBody, route } from "./validate.js";
 import { addSizes, createStyle, updateStyle } from "../commerce/catalog.js";
 import { nextStyleCode } from "../commerce/codes.js";
-import { adjustStock, receiveStock, transferStock } from "../commerce/stock.js";
+import { adjustStock, receiveStock } from "../commerce/stock.js";
+import { createTransfer, ewayBillData } from "../commerce/transfers.js";
 import { GST_STATES } from "../commerce/pincode.js";
 import * as orders from "../commerce/orders.js";
 import { bookCourier, cancelBooking, courierRates, refreshLabel } from "../shipping/courier.js";
@@ -79,7 +80,7 @@ export function createCommerceRouter({ config, services }) {
   }));
 
   router.post("/api/locations", requireAuth(), requirePermission("settings:write"), route(async (req, res) => {
-    const body = parseBody(z.object({ code: z.string().regex(/^[A-Za-z0-9]{2,6}$/), name: z.string().min(2).max(80), kind: z.enum(["store", "warehouse"]).default("store"), address: z.string().max(300).default(""), pincode: z.string().regex(/^[1-9]\d{5}$/).optional(), invoicePrefix: z.string().regex(/^[A-Za-z0-9]{2,4}$/) }), req);
+    const body = parseBody(z.object({ code: z.string().regex(/^[A-Za-z0-9]{2,6}$/), name: z.string().min(2).max(80), kind: z.enum(["store", "warehouse"]).default("store"), address: z.string().max(300).default(""), pincode: z.string().regex(/^[1-9]\d{5}$/).optional(), invoicePrefix: z.string().regex(/^[A-Za-z0-9]{2,4}$/), city: z.string().trim().max(50).default(""), gstin: z.string().trim().toUpperCase().regex(/^$|^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "a 15-character GSTIN").default("") }), req);
     try {
       const location = await Location.create({ tenantId, ...body });
       await audit({ req, action: "location.create", meta: { locationId: location._id, code: location.code } });
@@ -88,6 +89,14 @@ export function createCommerceRouter({ config, services }) {
       if (isDuplicateKeyError(error)) throw httpError(409, "That location code or invoice prefix is already used", "DUPLICATE");
       throw error;
     }
+  }));
+
+  router.patch("/api/locations/:code", requireAuth(), requirePermission("settings:write"), route(async (req, res) => {
+    const body = parseBody(z.object({ name: z.string().min(2).max(80).optional(), address: z.string().max(300).optional(), pincode: z.string().regex(/^[1-9]\d{5}$/).optional(), city: z.string().trim().max(50).optional(), gstin: z.string().trim().toUpperCase().regex(/^$|^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "a 15-character GSTIN").optional(), active: z.boolean().optional() }), req);
+    const location = await Location.findOneAndUpdate({ tenantId, code: String(req.params.code).toUpperCase() }, { $set: body }, { new: true, runValidators: true });
+    if (!location) throw httpError(404, "Location not found");
+    await audit({ req, action: "location.update", meta: { code: location.code, fields: Object.keys(body) } });
+    res.json({ location });
   }));
 
   router.get("/api/suppliers", requireAuth(), requirePermission("catalog:read"), route(async (req, res) => {
@@ -196,13 +205,53 @@ export function createCommerceRouter({ config, services }) {
 
   router.post("/api/stock/transfer", requireAuth(), requirePermission("stock:write"), route(async (req, res) => {
     const body = parseBody(z.object({ from: z.string(), to: z.string(), items, note: z.string().max(300).default("") }), req);
-    await withTransaction(async (session) => {
+    const transfer = await withTransaction(async (session) => {
       const [from, to] = [await locationByCode(body.from, session), await locationByCode(body.to, session)];
       const find = await skusByCode(body.items.map((item) => item.skuCode), session);
-      await transferStock({ tenantId, fromLocationId: from._id, toLocationId: to._id, items: body.items.map((item) => ({ sku: find(item.skuCode), qty: item.qty })), by: req.user.name, note: body.note, session });
+      return createTransfer({ tenantId, from, to, items: body.items.map((item) => ({ sku: find(item.skuCode), qty: item.qty })), by: req.user.name, note: body.note, session });
     });
-    await audit({ req, action: "stock.transfer", meta: { from: body.from, to: body.to } });
-    res.json({ ok: true });
+    await audit({ req, action: "stock.transfer", meta: { from: body.from, to: body.to, transferId: transfer._id } });
+    res.json({ ok: true, transfer });
+  }));
+
+  // ---- Transfers: delivery challans and e-way bill data -------------------------------------------
+  router.get("/api/transfers", requireAuth(), requirePermission("stock:read"), route(async (req, res) => {
+    const transfers = await Transfer.find({ tenantId }).sort({ at: -1 }).limit(100).lean();
+    const names = new Map((await Location.find({ tenantId }, { code: 1, name: 1 }).lean()).map((row) => [String(row._id), row.name || row.code]));
+    res.json({ transfers: transfers.map((row) => ({ ...row, from: names.get(String(row.fromLocationId)) || "", to: names.get(String(row.toLocationId)) || "", pieces: row.lines.reduce((sum, line) => sum + line.qty, 0) })) });
+  }));
+
+  async function loadTransfer(transferId) {
+    if (!/^[0-9a-f]{24}$/i.test(transferId)) throw httpError(404, "Transfer not found");
+    const transfer = await Transfer.findOne({ _id: transferId, tenantId });
+    if (!transfer) throw httpError(404, "Transfer not found");
+    return transfer;
+  }
+
+  router.get("/api/transfers/:id", requireAuth(), requirePermission("stock:read"), route(async (req, res) => {
+    const transfer = await loadTransfer(req.params.id);
+    const settings = await getSettings(tenantId);
+    const eway = await ewayBillData({ tenantId, transfer });
+    res.json({ transfer, eway, business: { legalName: settings.legalName, brandName: settings.brandName, gstin: settings.gstin, address: settings.registeredAddress }, thresholdPaise: settings.eway?.thresholdPaise ?? 50_000_00 });
+  }));
+
+  router.patch("/api/transfers/:id", requireAuth(), requirePermission("stock:write"), route(async (req, res) => {
+    const body = parseBody(
+      z.object({
+        transport: z.object({ mode: z.enum(["road", "rail", "air", "ship"]).optional(), vehicleNo: z.string().trim().toUpperCase().regex(/^$|^[A-Z0-9]{4,15}$/, "a vehicle number like MP09AB1234").optional(), transporterName: z.string().trim().max(100).optional(), transporterId: z.string().trim().toUpperCase().regex(/^$|^[0-9A-Z]{15}$/, "a 15-character transporter ID").optional(), distanceKm: z.number().min(0).max(4000).optional() }).optional(),
+        ewayBillNo: z.string().trim().regex(/^$|^\d{12}$/, "a 12-digit e-way bill number").optional(),
+      }),
+      req,
+    );
+    const transfer = await loadTransfer(req.params.id);
+    if (body.transport) for (const [key, value] of Object.entries(body.transport)) if (value !== undefined) transfer.set(`transport.${key}`, value);
+    if (body.ewayBillNo !== undefined) {
+      transfer.ewayBillNo = body.ewayBillNo;
+      transfer.ewayBillAt = body.ewayBillNo ? new Date() : null;
+    }
+    await transfer.save();
+    await audit({ req, action: "transfer.update", meta: { transferId: transfer._id } });
+    res.json({ transfer, eway: await ewayBillData({ tenantId, transfer }) });
   }));
 
   // ---- Orders ------------------------------------------------------------------------------------
@@ -267,10 +316,18 @@ export function createCommerceRouter({ config, services }) {
 
   // A sale at the store counter (the POS screen calls this).
   router.post("/api/store-sales", requireAuth(), requirePermission("orders:write"), route(async (req, res) => {
-    const body = parseBody(z.object({ location: z.string(), items, method: z.enum(["store_cash", "store_upi", "store_card"]), customer: z.object({ name: z.string().max(80).optional(), phone: z.string().max(15).optional() }).default({}) }), req);
+    const body = parseBody(z.object({ location: z.string(), items, method: z.enum(["store_cash", "store_upi", "store_card"]), customer: z.object({ name: z.string().max(80).optional(), phone: z.string().max(15).optional() }).default({}), exchangeReturnId: id.optional(), code: z.string().trim().max(20).default(""), redeem: z.number().int().min(0).max(1_000_000).default(0) }), req);
     const order = await withTransaction(async (session) => {
       const location = await locationByCode(body.location, session);
-      return orders.storeSale({ tenantId, locationId: location._id, items: body.items, method: body.method, customer: body.customer, by: req.user, session });
+      const sale = await orders.storeSale({ tenantId, locationId: location._id, items: body.items, method: body.method, customer: body.customer, code: body.code, redeem: body.redeem, by: req.user, session });
+      // An exchange: the credit from a return goes into this bill; the customer pays the difference.
+      if (body.exchangeReturnId) {
+        const ret = await Return.findOneAndUpdate({ _id: body.exchangeReturnId, tenantId, "refund.method": "exchange", exchangeOrderId: null }, { $set: { exchangeOrderId: sale._id } }, { new: true, session });
+        if (!ret) throw httpError(409, "That exchange credit has already been used or is not an exchange.", "CREDIT_USED");
+        sale.history.push(orders.historyEntry(req.user, "exchange", `credit Rs ${(ret.refund.amountPaise / 100).toFixed(2)} from return ${ret.number} (order ${ret.orderNumber})`));
+        await sale.save({ session });
+      }
+      return sale;
     });
     await audit({ req, action: "order.store_sale", meta: { orderId: order._id } });
     res.status(201).json({ order, invoice: await Invoice.findById(order.invoiceId).lean() });
@@ -380,6 +437,65 @@ export function createCommerceRouter({ config, services }) {
             template: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional(),
           })
           .optional(),
+        broadcasts: z
+          .object({
+            minGapDays: z.number().int().min(0).max(30).optional(),
+            dailyLimit: z.number().int().min(50).max(100000).optional(),
+            sendFromHour: z.number().int().min(0).max(23).optional(),
+            sendUntilHour: z.number().int().min(1).max(24).optional(),
+          })
+          .refine((value) => value.sendFromHour === undefined || value.sendUntilHour === undefined || value.sendFromHour < value.sendUntilHour, "Sending must start before it ends")
+          .optional(),
+        shop: z
+          .object({
+            loginTemplate: z.object({ name: z.string().trim().max(80), language: z.string().trim().max(10).default("en") }).optional(),
+            whatsappNumber: z.string().trim().max(20).optional(),
+            instagram: z.string().trim().max(60).optional(),
+            shippingNote: z.string().trim().max(300).optional(),
+            returnsNote: z.string().trim().max(300).optional(),
+            sizeCharts: z.array(z.object({ name: z.string().trim().min(1).max(60), categories: z.array(z.string().trim().toLowerCase().max(40)).max(20), unit: z.string().trim().max(20).default("inches"), columns: z.array(z.string().trim().max(20)).min(2).max(8), rows: z.array(z.array(z.string().trim().max(12)).max(8)).max(20), note: z.string().trim().max(200).default("") })).max(10).optional(),
+          })
+          .optional(),
+        eway: z.object({ thresholdPaise: z.number().int().min(0).max(1_00_00_000_00).optional(), defaultDistanceKm: z.number().min(0).max(4000).optional() }).optional(),
+        brief: z
+          .object({
+            enabled: z.boolean().optional(),
+            hour: z.number().int().min(5).max(12).optional(),
+            minute: z.number().int().min(0).max(59).optional(),
+            phones: z.array(z.string().trim().regex(/^\+?[\d\s-]{10,16}$/, "a mobile number")).max(5).optional(),
+            template: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional(),
+          })
+          .optional(),
+        buying: z
+          .object({
+            coverDays: z.number().int().min(7).max(180).optional(),
+            leadDays: z.number().int().min(1).max(120).optional(),
+            minMarkupPct: z.number().min(0).max(300).optional(),
+            trialDays: z.number().int().min(7).max(90).optional(),
+            calendar: z
+              .array(z.object({ name: z.string().trim().min(2).max(60), date: z.iso.date(), yearly: z.boolean().default(false), buyWeeksBefore: z.number().int().min(0).max(26).default(4), categories: z.array(z.string().trim().toLowerCase().max(40)).max(20).default([]), note: z.string().trim().max(200).default("") }))
+              .max(40)
+              .optional(),
+          })
+          .optional(),
+        loyalty: z
+          .object({
+            enabled: z.boolean().optional(),
+            rupeesPerPoint: z.number().int().min(1).max(10000).optional(),
+            pointValuePaise: z.number().int().min(1).max(10000).optional(),
+            maxRedeemPct: z.number().min(0).max(100).optional(),
+            minRedeemPoints: z.number().int().min(0).max(100000).optional(),
+            referrerPoints: z.number().int().min(0).max(100000).optional(),
+            referralDiscountPct: z.number().min(0).max(50).optional(),
+            tiers: z
+              .array(z.object({ name: z.string().trim().min(2).max(30), minSpendPaise: z.number().int().min(0).max(1_000_000_00), multiplier: z.number().min(1).max(5), perk: z.string().trim().max(120).default("") }))
+              .min(1)
+              .max(6)
+              .refine((tiers) => tiers.some((tier) => tier.minSpendPaise === 0), "One tier must start at Rs 0")
+              .refine((tiers) => new Set(tiers.map((tier) => tier.minSpendPaise)).size === tiers.length, "Two tiers start at the same spend")
+              .optional(),
+          })
+          .optional(),
         studio: z
           .object({
             backdrop: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).transform((value) => value.replace("#", "").toUpperCase()).optional(),
@@ -398,6 +514,22 @@ export function createCommerceRouter({ config, services }) {
           })
           .optional(),
         templates: z.object({ orderUpdate: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional() }).optional(),
+        stylist: z
+          .object({
+            enabled: z.boolean().optional(),
+            dailyLimit: z.number().int().min(1).max(100).optional(),
+            pauseMinutes: z.number().int().min(0).max(1440).optional(),
+            handoffHours: z.number().int().min(1).max(168).optional(),
+            notes: z.string().trim().max(1500).optional(),
+          })
+          .optional(),
+        ads: z.object({ sendPurchases: z.boolean().optional(), channels: z.array(z.enum(["website", "whatsapp", "store"])).max(3).optional() }).optional(),
+        instagram: z
+          .object({
+            commentReplies: z.boolean().optional(),
+            rules: z.array(z.object({ keyword: z.string().trim().toLowerCase().min(2).max(30), reply: z.string().trim().min(2).max(900), publicReply: z.string().trim().max(200).default("") })).max(20).optional(),
+          })
+          .optional(),
       }),
       req,
     );

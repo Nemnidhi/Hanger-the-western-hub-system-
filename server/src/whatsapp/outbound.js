@@ -39,6 +39,7 @@ export async function queueOutbound({ tenantId, session: outer }, { conversation
           purpose: content.purpose || "chat",
           orderId: content.orderId || null,
           offerId: content.offerId || null,
+          replyTo: content.replyTo || null,
           fallback: content.fallback || null,
         },
       ],

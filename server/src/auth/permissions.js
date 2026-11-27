@@ -1,6 +1,6 @@
 // Who may do what.
 // Owner: everything, including settings, prices and the team.
-// Manager: runs the day - chats, orders, catalogue, stock, reports.
+// Manager: runs the day - chats, orders, catalogue, stock, reports, WhatsApp broadcasts.
 // Staff (store): chats, orders and store billing; can see the catalogue and stock but not change them.
 // The photo studio (studio:use): staff photograph new pieces and put the result on a new draft style;
 // changing a style that already exists stays with catalog:write.
@@ -13,7 +13,7 @@ const PERMISSIONS = {
     "inbox:read", "inbox:write", "templates:read",
     "orders:read", "orders:write", "orders:fulfil",
     "catalog:read", "catalog:write", "stock:read", "stock:write", "studio:use",
-    "reports:read", "settings:read",
+    "reports:read", "settings:read", "broadcasts:send",
   ],
   staff: ["inbox:read", "inbox:write", "templates:read", "orders:read", "orders:write", "catalog:read", "stock:read", "studio:use", "settings:read"],
   packer: ["orders:read", "orders:fulfil", "catalog:read", "stock:read"],

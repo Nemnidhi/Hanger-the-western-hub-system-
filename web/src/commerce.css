@@ -274,3 +274,77 @@ a.btn { text-decoration: none; }
 .tag-lines td { vertical-align: middle; }
 .tag-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 8px; }
 .tag-actions > div { display: grid; gap: 6px; align-content: start; }
+
+/* Reports */
+.report-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.report-bar .chips { margin-bottom: 0; }
+.report-dates { display: flex; gap: 8px; align-items: center; }
+.report-dates .input { width: auto; }
+.report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin: 14px 0; }
+.report-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; min-width: 0; }
+.report-card.wide { grid-column: 1 / -1; }
+.report-card h3 { font-size: 13px; margin: 0 0 6px; }
+.report-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.table-scroll { overflow-x: auto; }
+.day-bars { margin: 6px 0 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px 8px; }
+.day-bars svg { width: 100%; height: 150px; display: block; }
+.day-bars .bar-sales { fill: var(--accent); }
+.day-bars .bar-returns { fill: var(--warn); }
+.day-bars g:hover .bar-sales { opacity: 0.75; }
+.day-bars figcaption { display: flex; justify-content: space-between; gap: 8px; margin-top: 4px; }
+.score-bar { display: inline-block; width: 60px; height: 6px; border-radius: 3px; background: var(--border); vertical-align: middle; overflow: hidden; }
+.score-bar span { display: block; height: 100%; background: var(--warn); }
+
+/* Broadcasts */
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.template-body { white-space: pre-wrap; background: var(--bg); border: 1px dashed var(--border); border-radius: var(--radius); padding: 10px 12px; font-size: 13px; }
+.bubble-preview { white-space: pre-wrap; background: color-mix(in srgb, var(--accent) 12%, var(--surface)); border-radius: 12px 12px 12px 2px; padding: 10px 12px; margin: 10px 0; max-width: 520px; font-size: 14px; }
+.reach { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin: 6px 0 12px; }
+.confirm-box { border: 1px solid var(--warn); border-radius: var(--radius); padding: 10px 12px; margin-top: 10px; }
+.confirm-box p { margin: 0 0 8px; }
+
+/* Returns */
+.detail-head .spacer { flex: 1; }
+.return-lines td { vertical-align: middle; }
+.return-lines select.input { min-width: 170px; }
+.found-bill { display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; margin-top: 8px; color: var(--text); cursor: pointer; font: inherit; }
+.found-bill:hover:not(:disabled) { border-color: var(--accent); }
+.found-bill:disabled { opacity: 0.55; cursor: default; }
+.credit-line { color: var(--accent); }
+.fit-lean { display: inline-block; position: relative; width: 70px; height: 6px; border-radius: 3px; background: var(--border); vertical-align: middle; }
+.fit-lean span { position: absolute; top: -2px; width: 4px; height: 10px; border-radius: 2px; background: var(--warn); transform: translateX(-50%); }
+.member-line { display: flex; gap: 8px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 8px 10px; border-radius: 8px; background: var(--surface-2, var(--surface)); border: 1px solid var(--border); font-size: 13px; }
+.bill > .input, .bill .member-line { margin-top: 8px; }
+.bill .pay-buttons { margin-top: 10px; }
+
+/* Buying desk */
+.score { position: relative; display: inline-flex; align-items: center; width: 72px; height: 20px; border-radius: 6px; background: var(--surface-2, rgba(127,127,127,0.12)); overflow: hidden; font-size: 12px; }
+.score-bar { position: absolute; inset: 0 auto 0 0; background: var(--accent); opacity: 0.35; }
+.score strong { position: relative; padding-left: 6px; }
+.why { margin: 6px 0 0; padding-left: 18px; font-size: 12.5px; color: var(--muted); }
+.why li { margin: 2px 0; }
+.size-inputs { display: flex; gap: 6px; flex-wrap: wrap; }
+.size-inputs label { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.size-inputs .input { width: 52px; text-align: center; padding: 4px; }
+.cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.cards-grid .card { min-width: 0; }
+.mix { display: flex; gap: 14px; align-items: flex-end; overflow-x: auto; padding: 4px 0; }
+.mix-col { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 40px; }
+.mix-bars { display: flex; gap: 3px; align-items: flex-end; height: 90px; }
+.mix-bar { width: 12px; border-radius: 3px 3px 0 0; min-height: 2px; }
+.mix-bar.sold, .mix-key.sold { background: var(--accent); }
+.mix-bar.bought, .mix-key.bought { background: var(--border); }
+.mix-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin: 0 2px 0 8px; }
+.po-text { white-space: pre-wrap; background: var(--surface-2, rgba(127,127,127,0.08)); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: 13px; max-height: 220px; overflow: auto; }
+.score-bar { top: 0; bottom: 0; height: 100%; display: block; }
+.cards-grid .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+.brief-card { margin-bottom: 16px; }
+.brief-card p { margin: 4px 0; }
+.brief-text { background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 13.5px; line-height: 1.5; max-width: 70ch; }
+
+.eway-panel { max-width: 820px; margin: 16px auto 0; }
+.eway-panel .problems { margin: 8px 0 12px 18px; color: var(--warn); }
+.challan-sign { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-top: 36px; color: #111; }
+.table td.bad { color: var(--danger); font-weight: 600; }

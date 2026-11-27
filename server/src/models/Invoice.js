@@ -8,6 +8,8 @@ const { ObjectId } = mongoose.Schema.Types;
 const invoiceLineSchema = new mongoose.Schema(
   {
     description: { type: String, required: true },
+    // The size code sold (for reports); older lines carry it only in the description.
+    skuCode: { type: String, default: "" },
     hsn: { type: String, required: true },
     qty: { type: Number, required: true },
     unitPaise: { type: Number, required: true },
@@ -30,8 +32,11 @@ const invoiceSchema = new mongoose.Schema(
     date: { type: Date, required: true },
     orderId: { type: ObjectId, ref: "Order", required: true },
     locationId: { type: ObjectId, ref: "Location", required: true },
-    // For a credit note: the invoice it reverses.
+    // For a credit note: the invoice it reverses, and the return it is for (a return can be part of
+    // an order; a cancellation or refusal reverses the whole invoice and has no return).
     againstInvoiceId: { type: ObjectId, ref: "Invoice", default: null },
+    returnId: { type: ObjectId, ref: "Return", default: null },
+    returnKey: { type: String, default: "" },
     seller: { legalName: String, gstin: String, address: String, stateCode: String },
     buyer: { name: String, address: String },
     placeOfSupply: { stateCode: { type: String, required: true }, state: { type: String, default: "" } },
@@ -50,6 +55,7 @@ const invoiceSchema = new mongoose.Schema(
 
 invoiceSchema.index({ tenantId: 1, number: 1 }, { unique: true });
 invoiceSchema.index({ tenantId: 1, date: -1 });
-invoiceSchema.index({ orderId: 1, kind: 1 }, { unique: true });
+// One invoice per order, one whole-order credit note, and one credit note per return.
+invoiceSchema.index({ orderId: 1, kind: 1, returnKey: 1 }, { unique: true });
 
 export const Invoice = mongoose.models.Invoice || mongoose.model("Invoice", invoiceSchema);

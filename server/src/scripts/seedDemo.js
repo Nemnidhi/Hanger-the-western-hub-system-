@@ -8,7 +8,7 @@ import { deflateSync, crc32 } from "node:zlib";
 import mongoose from "mongoose";
 import { loadConfig } from "../config.js";
 import { connectDb, withTransaction } from "../db.js";
-import { Contact, Location, Order, Settings, Supplier, User } from "../models/index.js";
+import { Contact, Location, Order, Settings, Supplier, Template, User } from "../models/index.js";
 import { createStyle } from "../commerce/catalog.js";
 import { receiveStock } from "../commerce/stock.js";
 import { choosePayment, markPacked, markShipped, placeOnlineOrder, setAddress, storeSale } from "../commerce/orders.js";
@@ -141,6 +141,15 @@ await withTransaction((session) => storeSale({ tenantId, locationId: store._id, 
 await Contact.create({ tenantId, waId: "919800000110", name: "Meera Joshi", profileName: "Meera", fit: { usualSize: "M", waist: "30" }, consents: { offers: { given: true, at: at(60 * 24 * 20), source: "store:Riya (store)" } } });
 await withTransaction((session) => storeSale({ tenantId, locationId: store._id, items: [{ skuCode: "TOP-014-M", qty: 1 }, { skuCode: "JNS-030-30", qty: 1 }], method: "store_upi", customer: { name: "Meera Joshi", phone: "9800000110" }, by: "Riya (store)", session, now: at(60 * 24 * 20) }));
 await withTransaction((session) => storeSale({ tenantId, locationId: store._id, items: [{ skuCode: "SKT-008-M", qty: 1 }], method: "store_card", customer: { name: "Meera Joshi", phone: "9800000110" }, by: "Riya (store)", session, now: at(60 * 24 * 6) }));
+
+// An approved Marketing template for broadcasts (in real use it comes from WhatsApp Manager), and two
+// more customers who agreed to offers.
+const DROP = "Hi {{1}}, new {{2}} just landed at The Hanger. Come try them on, or reply here and we'll send photos in your size.";
+await Template.create({ tenantId, name: "new_arrivals", language: "en", category: "MARKETING", status: "APPROVED", bodyText: DROP, paramCount: 2, components: [{ type: "BODY", text: DROP }, { type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Stop promotions" }] }] });
+await Contact.create([
+  { tenantId, waId: "919800000111", name: "Tanvi Gupta", fit: { usualSize: "S" }, lastAddress: { pincode: "452001" }, consents: { offers: { given: true, at: at(60 * 24 * 9), source: "whatsapp:button" } } },
+  { tenantId, waId: "919800000112", name: "Ishita Rao", fit: { usualSize: "L" }, lastAddress: { pincode: "462016" }, consents: { offers: { given: true, at: at(60 * 24 * 3), source: "store:Riya (store)" } } },
+]);
 
 console.log(`Demo boutique ready in "${dbName}".`);
 console.log(`Sign in: owner@hanger.local / ${password}  (two-step code: node src/scripts/demoCode.js)`);

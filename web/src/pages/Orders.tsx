@@ -3,6 +3,7 @@ import { api, can, type Me } from "../api";
 import { phone, rupees, when } from "../format";
 import { useLive } from "../live";
 import { Dialog, Notice, useLoad, useRun } from "../ui";
+import { ReturnDialog } from "./Returns";
 import { CHANNEL_LABEL, GST_STATES, PAYMENT_LABEL, STATUS_LABEL, STATUS_TONE, type CourierRate, type Invoice, type Order } from "../types";
 
 // Orders: a list by what needs doing (left) and the open order with its next step (right).
@@ -261,7 +262,7 @@ function OrderDetail({ me, prefix, order, invoices, courierReady, onChanged }: {
       )}
 
       {ask === "cancel" && <AskDialog title="Cancel this order" label="Why?" placeholder="Customer called to cancel" busy={busy} onClose={() => setAsk(null)} onSubmit={(reason) => act("cancel", { reason })} note={order.invoiceId ? "Stock goes back on the shelf and a credit note is made. Refund an online payment in Razorpay." : "The held stock is released."} />}
-      {ask === "return" && <AskDialog title="Mark returned" label="Why did it come back?" placeholder="Too small" busy={busy} onClose={() => setAsk(null)} onSubmit={(reason) => act("return", { reason })} note="The pieces go back into stock and a credit note is made. Refund the customer in Razorpay or by UPI." />}
+      {ask === "return" && <ReturnDialog orderId={order._id} lines={order.lines} channel={order.channel} onClose={() => setAsk(null)} onDone={() => (setAsk(null), onChanged())} />}
       {ask === "rto" && <AskDialog title="Came back undelivered (RTO)" label="Note (optional)" placeholder="Customer refused" optional busy={busy} onClose={() => setAsk(null)} onSubmit={(note) => act("rto", { note })} note="Counts against the customer's and the pincode's COD record." />}
       {ask === "ship" && <ShipDialog busy={busy} onClose={() => setAsk(null)} onSubmit={(courier, awb) => act("ship", { courier, awb })} />}
       {ask === "book" && <BookCourierDialog order={order} onClose={() => setAsk(null)} onBooked={() => (setAsk(null), onChanged())} />}
@@ -400,18 +401,18 @@ function NextStep({ order, busy, canWrite, canFulfil, courierReady, act, setAsk 
       </>
     );
   }
-  if (order.status === "delivered" && order.channel !== "store") {
-    text = "Delivered.";
+  if (order.status === "delivered") {
+    const back = order.lines.reduce((sum, line) => sum + (line.returnedQty || 0), 0);
+    text = `${order.channel === "store" ? "Sold at the counter" : "Delivered"}${back ? `; ${back} piece${back === 1 ? "" : "s"} came back` : ""}.`;
     main = canWrite && (
       <button className="btn" disabled={busy} onClick={() => setAsk("return")}>
-        Customer returned it
+        Pieces came back
       </button>
     );
   }
-  if (order.status === "delivered" && order.channel === "store") text = "Sold at the counter.";
   if (order.status === "cancelled") text = `Cancelled${order.cancelReason ? `: ${order.cancelReason}` : ""}.`;
   if (order.status === "rto") text = "Came back undelivered; the stock is back on the shelf.";
-  if (order.status === "returned") text = "Returned; the stock is back on the shelf.";
+  if (order.status === "returned") text = "Everything came back; pieces fit to sell are back on the shelf.";
 
   return (
     <div className="next-step">

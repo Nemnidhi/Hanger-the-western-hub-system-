@@ -4,7 +4,9 @@ import { connectDb, disconnectDb } from "./db.js";
 import { createRunner } from "./jobs/runner.js";
 import { enqueue } from "./jobs/queue.js";
 import { createHandlers } from "./handlers.js";
-import "./models/index.js";
+import { getSettings } from "./models/index.js";
+import { briefDue } from "./commerce/brief.js";
+import { istDay } from "./commerce/reports.js";
 
 // The worker process: runs the durable jobs (WhatsApp events and sends, chat ordering, payment links,
 // hold expiry, the Meta catalogue sync). Several workers can run at once; each job is claimed by one.
@@ -30,9 +32,19 @@ function scheduleTrackingPoll() {
   const slot = Math.floor(Date.now() / POLL_MS);
   enqueue("shipping.poll", {}, { dedupeKey: `shippoll:${slot}` }).catch((error) => logger.warn({ err: { message: error?.message } }, "could not schedule tracking check"));
 }
+// The owner's morning brief: once a day from the hour set in Settings (the day's key keeps it to one).
+async function scheduleBrief() {
+  try {
+    const settings = await getSettings(config.TENANT_ID);
+    if (briefDue(settings)) await enqueue("brief.morning", {}, { dedupeKey: `brief:${istDay(new Date())}` });
+  } catch (error) {
+    logger.warn({ err: { message: error?.message } }, "could not schedule the morning brief");
+  }
+}
 function scheduleAll() {
   scheduleCatalogSync();
   scheduleTrackingPoll();
+  scheduleBrief();
 }
 scheduleAll();
 const timer = setInterval(scheduleAll, 60 * 1000);

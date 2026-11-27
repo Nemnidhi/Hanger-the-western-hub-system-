@@ -5,12 +5,15 @@
   "description": "The Hanger's own commerce platform: catalogue, stock by location, WhatsApp ordering, COD checks, GST invoices, store billing.",
   "workspaces": [
     "server",
-    "web"
+    "web",
+    "store"
   ],
   "scripts": {
     "test": "npm test --workspace server",
     "build": "npm run build --workspace web",
-    "dev:web": "npm run dev --workspace web"
+    "dev:web": "npm run dev --workspace web",
+    "dev:store": "npm run dev --workspace store",
+    "build:store": "npm run build --workspace store"
   },
   "engines": {
     "node": ">=22"

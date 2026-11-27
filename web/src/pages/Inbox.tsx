@@ -221,7 +221,7 @@ function ChatView({
     }
   }
 
-  async function update(changes: { status?: string; assignedTo?: string }) {
+  async function update(changes: { status?: string; assignedTo?: string; stylist?: "on" | "off" }) {
     try {
       const result = await api<{ data: Conversation }>(`/api/conversations/${conversationId}`, { method: "PATCH", body: changes });
       setChat(result.data);
@@ -232,6 +232,7 @@ function ChatView({
   }
 
   const windowOpen = Boolean(chat?.window.open);
+  const stylistHere = messages.some((message) => message.purpose === "stylist") || Boolean(chat?.stylistOffUntil);
   const name = chat?.contact?.name || phone(chat?.contact?.waId);
 
   return (
@@ -256,6 +257,11 @@ function ChatView({
                 </option>
               ))}
             </select>
+            {stylistHere && (
+              <button className="btn small" onClick={() => update({ stylist: chat.stylistOffUntil ? "on" : "off" })} title="The AI stylist answers questions about the stock in this chat">
+                {chat.stylistOffUntil ? "Let the stylist answer" : "Stylist off here"}
+              </button>
+            )}
             <select className="input" style={{ width: "auto" }} value={chat.status} onChange={(event) => update({ status: event.target.value })} aria-label="Status">
               <option value="open">Open</option>
               <option value="waiting">Waiting</option>
@@ -265,6 +271,11 @@ function ChatView({
         )}
       </header>
 
+      {chat?.stylistNote && (
+        <div className="notice warn" style={{ margin: "8px 12px 0" }}>
+          The stylist stepped back from this chat ({chat.stylistNote}). It stays quiet until {shortTime(chat.stylistOffUntil || null)}.
+        </div>
+      )}
       <div className="messages" aria-live="polite">
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
@@ -356,6 +367,8 @@ function MessageBubble({ message }: { message: Message }) {
         ) : null;
       case "template":
         return <span className="muted">Template: {message.template?.name}</span>;
+      case "products":
+        return <span className="muted">Product list from the catalogue</span>;
       case "unsupported":
         return <span className="muted">This kind of message can't be shown here yet.</span>;
       default:
@@ -366,6 +379,7 @@ function MessageBubble({ message }: { message: Message }) {
   const showText = message.text && !["location"].includes(message.type);
   return (
     <div className={`bubble ${message.direction}`}>
+      {message.purpose === "stylist" && <div className="muted small-text">Stylist (AI)</div>}
       {body}
       {showText && <div>{message.text}</div>}
       {message.status === "failed" && message.error && (

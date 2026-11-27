@@ -1,15 +1,16 @@
 import { useMemo, useRef, useState } from "react";
 import { codeHas, sameCode } from "../codes";
 import { api, can, type Me } from "../api";
-import { when } from "../format";
+import { rupees, when } from "../format";
 import { Notice, useLoad, useRun } from "../ui";
 import type { Location, Style, Supplier } from "../types";
 import { TagDialog } from "./Tags";
+import type { Transfer } from "./Challan";
 
 // Stock in and around the boutique: receive a supplier's delivery, count a size, move pieces
 // between locations, and the record of every change.
 
-type Tab = "receive" | "count" | "transfer" | "moves";
+type Tab = "receive" | "count" | "transfer" | "transfers" | "moves";
 
 interface Move {
   _id: string;
@@ -38,6 +39,7 @@ export function Stock({ me }: { me: Me }) {
     { id: "receive", label: "Receive", show: can(me, "stock:write") },
     { id: "count", label: "Count", show: can(me, "stock:write") },
     { id: "transfer", label: "Move", show: can(me, "stock:write") && locs.length > 1 },
+    { id: "transfers", label: "Challans", show: locs.length > 1 },
     { id: "moves", label: "History", show: true },
   ];
 
@@ -62,6 +64,7 @@ export function Stock({ me }: { me: Me }) {
       {locs.length > 0 && tab === "receive" && <ItemsForm mode="receive" sizes={sizes} locs={locs} suppliers={suppliers.data?.suppliers || []} onDone={styles.reload} />}
       {locs.length > 0 && tab === "transfer" && <ItemsForm mode="transfer" sizes={sizes} locs={locs} suppliers={[]} onDone={styles.reload} />}
       {locs.length > 0 && tab === "count" && <CountForm sizes={sizes} locs={locs} onDone={styles.reload} />}
+      {tab === "transfers" && <Transfers />}
       {tab === "moves" && <Moves locs={locs} />}
     </div>
   );
@@ -116,6 +119,7 @@ function ItemsForm({ mode, sizes, locs, suppliers, onDone }: { mode: "receive" |
   const [supplierId, setSupplierId] = useState("");
   const [note, setNote] = useState("");
   const [done, setDone] = useState("");
+  const [moved, setMoved] = useState<Transfer | null>(null);
   // The delivery just received, for its price tags.
   const [received, setReceived] = useState<{ code: string; qty: number }[]>([]);
   const [tagging, setTagging] = useState(false);
@@ -127,7 +131,7 @@ function ItemsForm({ mode, sizes, locs, suppliers, onDone }: { mode: "receive" |
     run(async () => {
       const items = lines.filter((line) => line.qty > 0).map((line) => ({ skuCode: line.code, qty: line.qty }));
       if (mode === "receive") await api("/api/stock/receive", { method: "POST", body: { location: to, items, note, ...(supplierId ? { supplierId } : {}) } });
-      else await api("/api/stock/transfer", { method: "POST", body: { from, to, items, note } });
+      else setMoved((await api<{ transfer: Transfer }>("/api/stock/transfer", { method: "POST", body: { from, to, items, note } })).transfer);
       setDone(`${mode === "receive" ? "Received" : "Moved"} ${pieces} piece${pieces > 1 ? "s" : ""}.`);
       if (mode === "receive") setReceived(items.map((item) => ({ code: item.skuCode, qty: item.qty })));
       setLines([]);
@@ -207,6 +211,11 @@ function ItemsForm({ mode, sizes, locs, suppliers, onDone }: { mode: "receive" |
       )}
       <Notice>{error}</Notice>
       <Notice tone="ok">{done}</Notice>
+      {moved && done && (
+        <Notice tone={moved.ewayNeeded ? "warn" : "ok"}>
+          Challan {moved.challanNo}, worth {rupees(moved.valuePaise)}.{moved.ewayNeeded ? " This needs an e-way bill before the goods leave." : ""} <a href={`#challan/${moved._id}`}>Open the challan</a>
+        </Notice>
+      )}
       {mode === "receive" && received.length > 0 && (
         <div className="row-actions">
           <button className="btn" onClick={() => setTagging(true)}>
@@ -343,6 +352,50 @@ function Moves({ locs }: { locs: Location[] }) {
         </tbody>
       </table>
       {moves.data && !moves.data.moves.length && <div className="empty">No stock changes yet.</div>}
+    </div>
+  );
+}
+
+type TransferRow = Transfer & { from: string; to: string; pieces: number };
+function Transfers() {
+  const list = useLoad<{ transfers: TransferRow[] }>("/api/transfers");
+  const rows = list.data?.transfers || [];
+  return (
+    <div>
+      <Notice>{list.error}</Notice>
+      {list.data && !rows.length && <div className="empty">No moves between locations yet.</div>}
+      {rows.length > 0 && (
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Challan</th>
+                <th>When</th>
+                <th>From → to</th>
+                <th className="num">Pieces</th>
+                <th className="num">Value</th>
+                <th>E-way bill</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <tr key={row._id}>
+                  <td>
+                    <a href={`#challan/${row._id}`}>{row.challanNo}</a>
+                  </td>
+                  <td>{when(row.at)}</td>
+                  <td>
+                    {row.from} → {row.to}
+                  </td>
+                  <td className="num">{row.pieces}</td>
+                  <td className="num">{rupees(row.valuePaise)}</td>
+                  <td>{row.ewayBillNo ? row.ewayBillNo : row.ewayNeeded ? <span className="badge warn">needed</span> : <span className="muted">not needed</span>}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

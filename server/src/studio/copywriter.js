@@ -42,7 +42,7 @@ Rules:
 - If the photo shows more than one piece, write about the main piece and say so in toCheck.`;
 
 /** Turns the SDK's errors into the job queue's terms: retry later, or stop with a reason. */
-function asJobError(error) {
+export function asJobError(error) {
   if (error instanceof Anthropic.RateLimitError || error instanceof Anthropic.InternalServerError || error instanceof Anthropic.APIConnectionError) {
     return new RetryableError(`Claude is busy (${error.message}); trying again shortly`);
   }

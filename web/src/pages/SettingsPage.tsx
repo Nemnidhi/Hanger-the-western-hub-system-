@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
+import { LoyaltyForm } from "./Customers";
+import { BuyingForm } from "./Buying";
+import { BriefForm } from "./Brief";
 import { DEFAULT_LOOK, TAG_SIZES, type TagLook } from "../tags";
 import { TagPreview } from "./Tags";
 import { api, can, type Me } from "../api";
-import { Notice, toPaise, useLoad, useRun } from "../ui";
+import { Dialog, Notice, toPaise, useLoad, useRun } from "../ui";
 import type { Location, PickPart, PickSettings, Settings, Supplier } from "../types";
 
 // The owner's settings: business and GST details, cash-on-delivery rules, locations and suppliers.
@@ -19,6 +22,14 @@ export function SettingsPage({ me }: { me: Me }) {
       {loaded.data && <PicksForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <StudioForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <TagsForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <BroadcastsForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <LoyaltyForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <BriefForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <BuyingForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <EwayForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <StylistForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <InstagramForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <AdsForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       <Locations canWrite={canWrite} onlineCode={loaded.data?.settings.onlineLocationCode || ""} list={locations} />
       <Suppliers canWrite={can(me, "catalog:write")} />
     </div>
@@ -324,6 +335,50 @@ function PicksForm({ settings, canWrite, onSaved }: { settings: Settings; canWri
 }
 
 /** Photo studio: the brand backdrop colour, the voice for write-ups, and the shop's own hashtags. */
+function BroadcastsForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const initial = () => ({ minGapDays: String(settings.broadcasts?.minGapDays ?? 3), dailyLimit: String(settings.broadcasts?.dailyLimit ?? 1000), sendFromHour: String(settings.broadcasts?.sendFromHour ?? 10), sendUntilHour: String(settings.broadcasts?.sendUntilHour ?? 20) });
+  const [form, setForm] = useState(initial);
+  useEffect(() => setForm(initial()), [settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", { method: "PATCH", body: { broadcasts: { minGapDays: Number(form.minGapDays), dailyLimit: Number(form.dailyLimit), sendFromHour: Number(form.sendFromHour), sendUntilHour: Number(form.sendUntilHour) } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  const field = (key: keyof ReturnType<typeof initial>, label: string, min: number, max: number) => (
+    <div className="field">
+      <label htmlFor={`bc-${key}`}>{label}</label>
+      <input id={`bc-${key}`} className="input" type="number" min={min} max={max} value={form[key]} onChange={(event) => setForm({ ...form, [key]: event.target.value })} />
+    </div>
+  );
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>WhatsApp broadcasts</h2>
+      <p className="muted small-text">
+        How often one customer may get an offer, how many customers the WhatsApp number may message a day (its limit in WhatsApp Manager), and the hours messages go out (India time).
+      </p>
+      <fieldset disabled={!canWrite}>
+        <div className="form-grid">
+          {field("minGapDays", "Days between offers to one customer", 0, 30)}
+          {field("dailyLimit", "Customers a day at most", 50, 100000)}
+          <div />
+          {field("sendFromHour", "Send from (hour, 0-23)", 0, 23)}
+          {field("sendUntilHour", "Until (hour, 1-24)", 1, 24)}
+        </div>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+      {canWrite && (
+        <button className="btn primary" disabled={busy}>
+          Save broadcasts
+        </button>
+      )}
+    </form>
+  );
+}
+
 function StudioForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
   const initial = () => ({ backdrop: `#${settings.studio?.backdrop || "F4ECE6"}`, voice: settings.studio?.voice || "", hashtags: (settings.studio?.hashtags || ["TheHangerIndore", "IndoreFashion", "WesternWear"]).map((tag) => `#${tag}`).join(" ") });
   const [form, setForm] = useState(initial);
@@ -460,7 +515,8 @@ function toForm(settings: Settings) {
 
 function Locations({ canWrite, onlineCode, list }: { canWrite: boolean; onlineCode: string; list: ReturnType<typeof useLoad<{ locations: Location[] }>> }) {
   const { busy, error, run } = useRun();
-  const empty = { code: "", name: "", kind: "store", address: "", pincode: "", invoicePrefix: "" };
+  const empty = { code: "", name: "", kind: "store", address: "", pincode: "", city: "", gstin: "", invoicePrefix: "" };
+  const [editing, setEditing] = useState<Location | null>(null);
   const [form, setForm] = useState(empty);
   const add = () =>
     run(async () => {
@@ -489,12 +545,20 @@ function Locations({ canWrite, onlineCode, list }: { canWrite: boolean; onlineCo
               <td>
                 {location.name}
                 <div className="muted small-text">
-                  {location.address} {location.pincode}
+                  {location.address} {location.city} {location.pincode}
+                  {location.gstin && ` · GSTIN ${location.gstin}`}
                 </div>
               </td>
               <td>{location.kind}</td>
               <td>{location.invoicePrefix}/…</td>
-              <td>{location.code === onlineCode && <span className="badge accent">ships online</span>}</td>
+              <td>
+                {location.code === onlineCode && <span className="badge accent">ships online</span>}{" "}
+                {canWrite && (
+                  <button type="button" className="btn small" onClick={() => setEditing(location)}>
+                    Edit
+                  </button>
+                )}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -525,6 +589,14 @@ function Locations({ canWrite, onlineCode, list }: { canWrite: boolean; onlineCo
             <input id="loc-pin" className="input" value={form.pincode} onChange={(event) => setForm({ ...form, pincode: event.target.value })} inputMode="numeric" pattern="[1-9][0-9]{5}" />
           </div>
           <div className="field">
+            <label htmlFor="loc-city">Town or city</label>
+            <input id="loc-city" className="input" value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })} placeholder="Indore" />
+          </div>
+          <div className="field">
+            <label htmlFor="loc-gstin">Own GSTIN (other state only)</label>
+            <input id="loc-gstin" className="input" value={form.gstin} onChange={(event) => setForm({ ...form, gstin: event.target.value.toUpperCase() })} placeholder="Blank = the business's" maxLength={15} />
+          </div>
+          <div className="field">
             <label htmlFor="loc-prefix">Invoice prefix</label>
             <input id="loc-prefix" className="input" required value={form.invoicePrefix} onChange={(event) => setForm({ ...form, invoicePrefix: event.target.value })} placeholder="ST1" pattern="[A-Za-z0-9]{2,4}" />
           </div>
@@ -536,7 +608,250 @@ function Locations({ canWrite, onlineCode, list }: { canWrite: boolean; onlineCo
         </form>
       )}
       <Notice>{error || list.error}</Notice>
+      {editing && (
+        <LocationDialog
+          location={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            list.reload();
+          }}
+        />
+      )}
     </section>
+  );
+}
+
+function LocationDialog({ location, onClose, onSaved }: { location: Location; onClose: () => void; onSaved: () => void }) {
+  const { busy, error, run } = useRun();
+  const [form, setForm] = useState({ name: location.name, address: location.address || "", pincode: location.pincode || "", city: location.city || "", gstin: location.gstin || "" });
+  const set = (key: keyof typeof form) => (event: { target: { value: string } }) => setForm({ ...form, [key]: key === "gstin" ? event.target.value.toUpperCase() : event.target.value });
+  const save = () =>
+    run(async () => {
+      await api(`/api/locations/${location.code}`, { method: "PATCH", body: { ...form, ...(form.pincode.trim() ? { pincode: form.pincode.trim() } : { pincode: undefined }) } });
+      onSaved();
+    });
+  return (
+    <Dialog title={`Edit ${location.code}`} onClose={onClose}>
+      <form onSubmit={(event) => (event.preventDefault(), save())}>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="le-name">Name</label>
+            <input id="le-name" className="input" required value={form.name} onChange={set("name")} />
+          </div>
+          <div className="field span-2">
+            <label htmlFor="le-address">Address</label>
+            <input id="le-address" className="input" value={form.address} onChange={set("address")} />
+          </div>
+          <div className="field">
+            <label htmlFor="le-city">Town or city</label>
+            <input id="le-city" className="input" value={form.city} onChange={set("city")} />
+          </div>
+          <div className="field">
+            <label htmlFor="le-pin">Pincode</label>
+            <input id="le-pin" className="input" value={form.pincode} onChange={set("pincode")} inputMode="numeric" pattern="[1-9][0-9]{5}" />
+          </div>
+          <div className="field">
+            <label htmlFor="le-gstin">Own GSTIN (other state only)</label>
+            <input id="le-gstin" className="input" value={form.gstin} onChange={set("gstin")} maxLength={15} placeholder="Blank = the business's" />
+          </div>
+        </div>
+        <p className="muted small-text">The invoice prefix and code stay as they are: invoices already carry them.</p>
+        <Notice>{error}</Notice>
+        <div className="row-actions">
+          <button className="btn primary" disabled={busy}>
+            Save
+          </button>
+          <button type="button" className="btn" onClick={onClose}>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Dialog>
+  );
+}
+
+function EwayForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const [form, setForm] = useState({ limit: String((settings.eway?.thresholdPaise ?? 50_000_00) / 100), km: String(settings.eway?.defaultDistanceKm ?? 0) });
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", { method: "PATCH", body: { eway: { thresholdPaise: Math.round(Number(form.limit) * 100), defaultDistanceKm: Number(form.km) || 0 } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>E-way bills</h2>
+      <p className="muted small-text">Stock moved between your locations gets a delivery challan. From this value it also needs an e-way bill (Rs 50,000 in most cases; some states set another limit inside the state, so check with your CA).</p>
+      <fieldset disabled={!canWrite}>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="ew-limit">E-way bill from (Rs)</label>
+            <input id="ew-limit" className="input" inputMode="numeric" value={form.limit} onChange={(event) => setForm({ ...form, limit: event.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="ew-km">Usual distance between locations (km)</label>
+            <input id="ew-km" className="input" inputMode="numeric" value={form.km} onChange={(event) => setForm({ ...form, km: event.target.value })} />
+          </div>
+          <div className="field end">
+            <button className="btn" disabled={busy}>
+              Save
+            </button>
+          </div>
+        </div>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+    </form>
+  );
+}
+
+function StylistForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const start = settings.stylist || { enabled: false, dailyLimit: 15, pauseMinutes: 120, handoffHours: 24, notes: "" };
+  const [form, setForm] = useState({ enabled: start.enabled, dailyLimit: String(start.dailyLimit), pauseMinutes: String(start.pauseMinutes), handoffHours: String(start.handoffHours), notes: start.notes });
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", { method: "PATCH", body: { stylist: { enabled: form.enabled, dailyLimit: Number(form.dailyLimit) || 15, pauseMinutes: Number(form.pauseMinutes) || 0, handoffHours: Number(form.handoffHours) || 24, notes: form.notes.trim() } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>WhatsApp stylist (AI)</h2>
+      <p className="muted small-text">
+        When it is on, a customer's question in her own words ("do you have this in M?", "something for a sangeet under 3,000?") gets an answer from Claude with pieces in stock online, sent as a
+        product list. Complaints, returns, payments, order changes and anything it is unsure of go to you in Chats, and it stays quiet in that chat. It never takes an address or a payment. Needs
+        ANTHROPIC_API_KEY on the server.
+      </p>
+      <fieldset disabled={!canWrite}>
+        <label className="check">
+          <input type="checkbox" checked={form.enabled} onChange={(event) => setForm({ ...form, enabled: event.target.checked })} /> Let the stylist answer questions on WhatsApp
+        </label>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="st-limit">Replies a chat in 24 hours (at most)</label>
+            <input id="st-limit" className="input" inputMode="numeric" value={form.dailyLimit} onChange={(event) => setForm({ ...form, dailyLimit: event.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="st-pause">Quiet after a staff reply (minutes)</label>
+            <input id="st-pause" className="input" inputMode="numeric" value={form.pauseMinutes} onChange={(event) => setForm({ ...form, pauseMinutes: event.target.value })} />
+          </div>
+          <div className="field">
+            <label htmlFor="st-hand">Quiet after handing over (hours)</label>
+            <input id="st-hand" className="input" inputMode="numeric" value={form.handoffHours} onChange={(event) => setForm({ ...form, handoffHours: event.target.value })} />
+          </div>
+        </div>
+        <div className="field">
+          <label htmlFor="st-notes">Your notes for the stylist</label>
+          <textarea id="st-notes" className="input" rows={3} maxLength={1500} value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Talk like our store staff. Push the new festive drop this month. Never promise same-day delivery." />
+        </div>
+        <button className="btn" disabled={busy}>
+          Save
+        </button>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+    </form>
+  );
+}
+
+function InstagramForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const start = settings.instagram || { commentReplies: false, rules: [] };
+  const [enabled, setEnabled] = useState(start.commentReplies);
+  const [rules, setRules] = useState(start.rules.length ? start.rules : [{ keyword: "price", reply: "Hi! Here are the details and the sizes in stock: {link}", publicReply: "Sent you a DM!" }]);
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const change = (index: number, key: "keyword" | "reply" | "publicReply", value: string) => setRules(rules.map((rule, i) => (i === index ? { ...rule, [key]: value } : rule)));
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", { method: "PATCH", body: { instagram: { commentReplies: enabled, rules: rules.filter((rule) => rule.keyword.trim() && rule.reply.trim()) } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>Instagram comments</h2>
+      <p className="muted small-text">A comment with one of these words gets one private reply in her messages (Instagram allows one, within 7 days), and the short public reply under the comment if you write one. {"{link}"} becomes the website's shop page.</p>
+      <fieldset disabled={!canWrite}>
+        <label className="check">
+          <input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} /> Reply to comments with these words on their own
+        </label>
+        {rules.map((rule, index) => (
+          <div key={index} className="form-grid">
+            <div className="field">
+              <label htmlFor={`ig-k-${index}`}>Word</label>
+              <input id={`ig-k-${index}`} className="input" value={rule.keyword} onChange={(event) => change(index, "keyword", event.target.value)} />
+            </div>
+            <div className="field" style={{ gridColumn: "span 2" }}>
+              <label htmlFor={`ig-r-${index}`}>Private reply</label>
+              <input id={`ig-r-${index}`} className="input" value={rule.reply} onChange={(event) => change(index, "reply", event.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor={`ig-p-${index}`}>Public reply (optional)</label>
+              <input id={`ig-p-${index}`} className="input" value={rule.publicReply} onChange={(event) => change(index, "publicReply", event.target.value)} />
+            </div>
+            <div className="field end">
+              <button type="button" className="btn small" onClick={() => setRules(rules.filter((_, i) => i !== index))}>
+                Remove
+              </button>
+            </div>
+          </div>
+        ))}
+        <div className="row-actions">
+          <button type="button" className="btn small" onClick={() => setRules([...rules, { keyword: "", reply: "", publicReply: "" }])}>
+            Add a word
+          </button>
+          <button className="btn" disabled={busy}>
+            Save
+          </button>
+        </div>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+    </form>
+  );
+}
+
+const AD_CHANNELS: [string, string][] = [["website", "Website"], ["whatsapp", "WhatsApp"], ["store", "Store bills with a phone"]];
+
+function AdsForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const start = settings.ads || { sendPurchases: true, channels: ["website", "whatsapp", "store"] };
+  const [send, setSend] = useState(start.sendPurchases);
+  const [channels, setChannels] = useState<string[]>(start.channels);
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", { method: "PATCH", body: { ads: { sendPurchases: send, channels } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>Meta ads</h2>
+      <p className="muted small-text">Confirmed orders go to Meta's Conversions API so it learns which ads sell (only when META_PIXEL_ID is set on the server). Only hashed phone, name and pincode leave, with the ad click when there is one. Mention it in the website's privacy policy.</p>
+      <fieldset disabled={!canWrite}>
+        <label className="check">
+          <input type="checkbox" checked={send} onChange={(event) => setSend(event.target.checked)} /> Send confirmed orders to Meta
+        </label>
+        <div className="row-actions">
+          {AD_CHANNELS.map(([id, label]) => (
+            <label key={id} className="check">
+              <input type="checkbox" checked={channels.includes(id)} onChange={(event) => setChannels(event.target.checked ? [...channels, id] : channels.filter((value) => value !== id))} /> {label}
+            </label>
+          ))}
+        </div>
+        <button className="btn" disabled={busy}>
+          Save
+        </button>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+    </form>
   );
 }
 

@@ -8,7 +8,7 @@ export function razorpayFromConfig(config, fetchImpl = fetch) {
   const auth = `Basic ${Buffer.from(`${config.RAZORPAY_KEY_ID}:${config.RAZORPAY_KEY_SECRET}`).toString("base64")}`;
   const base = config.RAZORPAY_API_BASE.replace(/\/$/, "");
   return {
-    async createPaymentLink({ amountPaise, referenceId, description, customerName, phone, expiresAt }) {
+    async createPaymentLink({ amountPaise, referenceId, description, customerName, phone, expiresAt, callbackUrl = "" }) {
       let response;
       try {
         response = await fetchImpl(`${base}/v1/payment_links`, {
@@ -25,6 +25,7 @@ export function razorpayFromConfig(config, fetchImpl = fetch) {
             reminder_enable: false,
             expire_by: Math.floor(expiresAt.getTime() / 1000),
             notes: { reference: referenceId },
+            ...(callbackUrl ? { callback_url: callbackUrl, callback_method: "get" } : {}),
           }),
           signal: AbortSignal.timeout(15_000),
         });

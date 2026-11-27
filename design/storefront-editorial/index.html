@@ -1,0 +1,760 @@
+<title>Hanger Editorial Storefront</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400..900;1,6..96,400..900&family=Archivo:wdth,wght@62..125,300..800&display=swap" rel="stylesheet" />
+<style>
+/* Layout: a monthly fashion issue. Masthead, cover with cover lines, contents by look number,
+   one feature spread, a drop countdown, colophon. Each look's page is a two-page spread. */
+:root {
+  --paper: #f6f5f1;
+  --card: #ffffff;
+  --ink: #121115;
+  --mute: #686770;
+  --rule: #d8d6cf;
+  --drop: #2433c4;      /* Issue 07's colour: block-print indigo */
+  --drop-ink: #ffffff;
+  --tint: #e6e8fa;
+  --shade: rgba(18, 17, 21, .42);
+  --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --text: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --ease: cubic-bezier(.2, .8, .2, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --paper: #0f0f12; --card: #17171c; --ink: #f1f0eb; --mute: #9b9aa3; --rule: #2c2c33; --drop: #8d97ff; --drop-ink: #0f0f12; --tint: #1b1e38; --shade: rgba(0, 0, 0, .6); color-scheme: dark; }
+}
+:root[data-theme="dark"] { --paper: #0f0f12; --card: #17171c; --ink: #f1f0eb; --mute: #9b9aa3; --rule: #2c2c33; --drop: #8d97ff; --drop-ink: #0f0f12; --tint: #1b1e38; --shade: rgba(0, 0, 0, .6); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--text); font-size: 16px; line-height: 1.55; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; color: inherit; cursor: pointer; background: none; border: 0; padding: 0; }
+svg { display: block; }
+:focus-visible { outline: 2px solid var(--drop); outline-offset: 3px; }
+.wrap { width: min(1280px, 100% - 32px); margin-inline: auto; }
+.label { font-size: 11px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; font-stretch: 110%; }
+.mute { color: var(--mute); }
+.num { font-variant-numeric: tabular-nums lining-nums; }
+h1, h2, h3 { font-family: var(--display); font-weight: 400; margin: 0; text-wrap: balance; letter-spacing: -.01em; }
+em { font-style: italic; }
+
+.preview-band { background: var(--ink); color: var(--paper); font-size: 12.5px; text-align: center; padding: 8px 16px; line-height: 1.4; }
+.preview-band b { letter-spacing: .14em; text-transform: uppercase; font-size: 11px; margin-right: 6px; }
+
+/* Top line + masthead */
+.topline { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 30; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.topline .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 16px; height: 54px; }
+.topline nav { display: flex; gap: 26px; }
+.topline nav a { font-size: 13px; font-weight: 500; letter-spacing: .04em; padding: 6px 0; border-bottom: 1px solid transparent; }
+.topline nav a.on, .topline nav a:hover { border-color: currentColor; }
+.mini-mast { font-family: var(--display); font-size: 22px; font-weight: 600; letter-spacing: .02em; opacity: 0; transition: opacity .3s; }
+.scrolled .mini-mast { opacity: 1; }
+.bag-btn { justify-self: end; font-size: 13px; font-weight: 600; letter-spacing: .04em; display: flex; align-items: center; gap: 8px; }
+.bag-btn .n { min-width: 24px; height: 24px; border-radius: 12px; background: var(--ink); color: var(--paper); display: grid; place-items: center; font-size: 12px; }
+.issue-line { font-size: 12.5px; color: var(--mute); }
+.mast { padding-block: 26px 6px; border-bottom: 3px double var(--ink); }
+.mast h1 { font-size: clamp(64px, 16.4vw, 238px); line-height: .82; font-weight: 500; letter-spacing: -.045em; text-align: center; font-variation-settings: "opsz" 96; }
+.mast h1 i { font-weight: 400; letter-spacing: -.06em; }
+.mast-meta { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 20px; padding-block: 14px 10px; border-top: 1px solid var(--ink); margin-top: 16px; }
+
+/* Cover */
+.cover { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 0; border-bottom: 1px solid var(--rule); }
+.cover-art { position: relative; background: var(--drop); min-height: 620px; overflow: hidden; }
+.cover-art .bigfig { position: absolute; inset: 4% 10% -2% 10%; }
+.cover-art .bigfig svg { width: 100%; height: 100%; }
+.cover-art .vert { position: absolute; left: 20px; bottom: 22px; color: var(--drop-ink); font-family: var(--display); font-size: clamp(54px, 8vw, 120px); line-height: .85; font-style: italic; }
+.cover-art .tag { position: absolute; right: 18px; top: 18px; background: var(--paper); color: var(--ink); padding: 8px 12px; font-size: 12px; font-weight: 600; letter-spacing: .06em; }
+.cover-lines { padding: 34px 0 34px 40px; display: flex; flex-direction: column; gap: 0; }
+.cover-line { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 18px 0; border-bottom: 1px solid var(--rule); }
+.cover-line:first-child { padding-top: 0; }
+.cover-line h3 { font-size: clamp(26px, 2.6vw, 38px); line-height: 1.04; }
+.cover-line p { grid-column: 1 / -1; margin: 0; color: var(--mute); font-size: 14.5px; max-width: 44ch; }
+.cover-line .go { align-self: start; font-size: 12px; font-weight: 600; letter-spacing: .1em; color: var(--drop); white-space: nowrap; padding-top: 8px; }
+.cover-line:hover h3 { font-style: italic; }
+
+/* Section heads */
+.sec { padding-block: 72px; border-bottom: 1px solid var(--rule); }
+.sec-head { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 20px; margin-bottom: 36px; }
+.sec-head h2 { font-size: clamp(40px, 6vw, 84px); line-height: .9; }
+.sec-head .rule { height: 1px; background: var(--ink); margin-bottom: 14px; }
+
+/* Contents */
+.contents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 40px; }
+.c-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto; gap: 14px; align-items: baseline; padding: 16px 0; border-top: 1px solid var(--rule); position: relative; }
+.c-row .no { font-family: var(--display); font-size: 28px; font-style: italic; color: var(--drop); }
+.c-row .nm { font-family: var(--display); font-size: 21px; line-height: 1.15; }
+.c-row .nm small { display: block; font-family: var(--text); font-size: 12.5px; color: var(--mute); margin-top: 2px; }
+.c-row .pr { font-size: 14px; font-weight: 600; }
+.c-row .flag { font-size: 10.5px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--drop); }
+.c-row:hover .nm { font-style: italic; }
+
+/* Feature spread */
+.feature { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+.pull { font-family: var(--display); font-size: clamp(40px, 5.4vw, 78px); line-height: .98; font-style: italic; letter-spacing: -.02em; }
+.pull span { color: var(--drop); }
+.standfirst { font-size: 17px; max-width: 46ch; margin-top: 26px; }
+.byline { margin-top: 18px; }
+.stagger { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.stagger a:nth-child(2) { margin-top: 90px; }
+.stagger a:nth-child(3) { margin-top: 30px; }
+.plate { position: relative; aspect-ratio: 3 / 4; overflow: hidden; max-width: 100%; }
+.plate svg { width: 100%; height: 100%; }
+.caption { display: flex; justify-content: space-between; gap: 10px; padding-top: 10px; font-size: 13px; border-top: 1px solid var(--ink); margin-top: 10px; }
+.caption b { font-weight: 600; }
+.caption i { font-family: var(--display); font-size: 15px; }
+
+/* Drop band */
+.drop-band { background: var(--drop); color: var(--drop-ink); padding-block: 60px; }
+.drop-band .wrap { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 30px; align-items: end; }
+.drop-band h2 { font-size: clamp(42px, 6vw, 92px); line-height: .9; }
+.count { display: flex; gap: 22px; font-family: var(--display); }
+.count div { text-align: center; }
+.count b { display: block; font-size: clamp(48px, 7vw, 104px); font-weight: 400; line-height: .9; font-variant-numeric: tabular-nums lining-nums; }
+.count span { font-family: var(--text); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 15px 24px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; border: 1px solid currentColor; transition: background .2s, color .2s; }
+.btn.solid { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.btn.solid:hover { background: var(--drop); border-color: var(--drop); color: var(--drop-ink); }
+.btn.on-drop { color: var(--drop-ink); }
+.btn.on-drop:hover { background: var(--drop-ink); color: var(--drop); }
+.btn.block { width: 100%; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Store */
+.store { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
+.store h2 { font-size: clamp(40px, 5vw, 72px); line-height: .95; }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0 28px; }
+.facts div { padding: 16px 0; border-top: 1px solid var(--rule); }
+.facts b { display: block; font-family: var(--display); font-size: 22px; font-weight: 400; }
+
+/* Colophon */
+footer { padding-block: 56px 40px; }
+.colophon { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 28px; font-size: 13.5px; }
+.colophon h4 { margin: 0 0 10px; }
+.colophon a { display: block; padding: 3px 0; color: var(--mute); }
+.colophon a:hover { color: var(--ink); }
+.foot-mast { font-family: var(--display); font-size: clamp(56px, 13vw, 190px); line-height: .8; letter-spacing: -.045em; margin-top: 40px; font-weight: 500; }
+
+/* Index (shop) */
+.page-head { padding-block: 42px 26px; border-bottom: 1px solid var(--ink); }
+.page-head h1 { font-size: clamp(56px, 9vw, 140px); line-height: .85; letter-spacing: -.04em; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; justify-content: space-between; padding-block: 18px; border-bottom: 1px solid var(--rule); }
+.cats { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.cats button { font-size: 13.5px; padding: 4px 0; border-bottom: 1px solid transparent; color: var(--mute); }
+.cats button.on { color: var(--ink); border-color: var(--ink); }
+.views { display: flex; gap: 2px; border: 1px solid var(--ink); }
+.views button { padding: 7px 14px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.views button.on { background: var(--ink); color: var(--paper); }
+.grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 36px 22px; padding-block: 30px 70px; }
+.grid a .plate svg { transition: transform .8s var(--ease); }
+.grid a:hover .plate svg { transform: scale(1.04); }
+.grid .no { position: absolute; left: 12px; top: 10px; font-family: var(--display); font-style: italic; font-size: 22px; color: var(--ink); }
+.grid .left { position: absolute; right: 10px; top: 12px; background: var(--card); color: var(--ink); font-size: 11px; font-weight: 600; padding: 4px 8px; letter-spacing: .04em; }
+.list { padding-block: 10px 70px; }
+.l-row { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 18px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--rule); }
+.l-row .no { font-family: var(--display); font-style: italic; font-size: 26px; color: var(--drop); }
+.l-row .nm { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.l-row .nm b { font-family: var(--display); font-size: clamp(22px, 2.4vw, 32px); font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l-row .nm .dots { flex: 1; border-bottom: 1px dotted var(--mute); transform: translateY(-6px); min-width: 20px; }
+.l-row .nm span { font-size: 13px; color: var(--mute); white-space: nowrap; }
+.l-row .pr { font-weight: 600; font-size: 15px; }
+.l-row:hover b { font-style: italic; }
+
+/* Spread (product) */
+.spread { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); border-bottom: 1px solid var(--rule); }
+.spread .left-page { position: relative; min-height: 700px; }
+.spread .left-page .plate { position: absolute; inset: 0; aspect-ratio: auto; }
+.spread .left-page .folio { position: absolute; left: 18px; bottom: 16px; font-size: 12px; letter-spacing: .1em; color: rgba(18, 17, 21, .6); }
+.views3 { position: absolute; right: 16px; bottom: 16px; display: flex; gap: 6px; }
+.views3 button { width: 46px; height: 58px; background: rgba(255, 255, 255, .7); border: 1px solid rgba(18, 17, 21, .2); overflow: hidden; }
+.views3 button.on { border-color: #121115; }
+.views3 svg { width: 100%; height: 100%; }
+.right-page { padding: 40px 0 40px 48px; display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.lookno { display: flex; justify-content: space-between; align-items: baseline; }
+.lookno b { font-family: var(--display); font-style: italic; font-size: 30px; font-weight: 400; color: var(--drop); }
+.right-page h1 { font-size: clamp(46px, 5.4vw, 86px); line-height: .92; letter-spacing: -.03em; }
+.price { font-size: 22px; font-weight: 600; }
+.price small { font-size: 12.5px; font-weight: 400; color: var(--mute); margin-left: 8px; }
+.stand { font-family: var(--display); font-size: 21px; line-height: 1.4; max-width: 38ch; }
+.sizes { display: flex; flex-wrap: wrap; gap: 8px; }
+.size { min-width: 58px; padding: 12px 10px 10px; border: 1px solid var(--rule); text-align: center; font-weight: 600; font-size: 14px; position: relative; }
+.size small { display: block; font-size: 10.5px; font-weight: 500; color: var(--drop); min-height: 14px; letter-spacing: .02em; }
+.size.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.size:disabled { color: var(--mute); text-decoration: line-through; cursor: not-allowed; }
+.size:disabled small { color: var(--mute); text-decoration: none; }
+.credits { border-top: 1px solid var(--ink); display: grid; grid-template-columns: 120px minmax(0, 1fr); font-size: 14px; }
+.credits dt, .credits dd { margin: 0; padding: 11px 0; border-bottom: 1px solid var(--rule); }
+.credits dt { font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; padding-top: 13px; }
+.credits dd a { border-bottom: 1px solid var(--rule); }
+.credits dd a:hover { border-color: var(--ink); }
+.pin { display: flex; gap: 8px; }
+.pin input { flex: 1; min-width: 0; }
+.input { width: 100%; border: 0; border-bottom: 1px solid var(--ink); background: transparent; padding: 11px 0; font: inherit; color: var(--ink); border-radius: 0; }
+.input::placeholder { color: var(--mute); }
+.input:focus { outline: none; border-color: var(--drop); }
+.turn { display: flex; justify-content: space-between; gap: 16px; padding-block: 22px; font-size: 13px; }
+.turn a { display: flex; flex-direction: column; gap: 2px; }
+.turn a:last-child { text-align: right; }
+.turn i { font-family: var(--display); font-size: 22px; }
+.pairs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; padding-block: 20px 70px; }
+
+/* Bag panel */
+.scrim { position: fixed; inset: 0; z-index: 50; background: var(--shade); opacity: 0; pointer-events: none; transition: opacity .3s; }
+.scrim.on { opacity: 1; pointer-events: auto; }
+.panel { position: fixed; z-index: 51; top: 0; right: 0; bottom: 0; width: min(460px, 100%); background: var(--paper); transform: translateX(102%); transition: transform .5s var(--ease); display: flex; flex-direction: column; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.panel.on { transform: none; }
+.panel-head { display: flex; justify-content: space-between; align-items: baseline; padding: 22px 24px; border-bottom: 3px double var(--ink); }
+.panel-head h2 { font-size: 38px; }
+.panel-body { flex: 1; overflow: auto; padding: 0 24px; }
+.b-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) auto; gap: 14px; padding: 16px 0; border-bottom: 1px solid var(--rule); align-items: center; }
+.b-row .plate { aspect-ratio: 3 / 4; }
+.b-row b { font-family: var(--display); font-size: 19px; font-weight: 400; display: block; }
+.qty { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 14px; }
+.qty button { width: 26px; height: 26px; border: 1px solid var(--rule); }
+.panel-foot { padding: 18px 24px 24px; border-top: 1px solid var(--ink); display: grid; gap: 8px; }
+.sum { display: flex; justify-content: space-between; font-size: 14px; }
+.sum.total { font-size: 18px; font-weight: 600; padding-top: 6px; }
+.meter { height: 3px; background: var(--rule); margin: 4px 0 2px; }
+.meter i { display: block; height: 100%; background: var(--drop); }
+.empty { padding: 60px 0; text-align: center; }
+.empty h3 { font-size: 34px; font-style: italic; }
+
+/* Checkout */
+.co { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 56px; padding-block: 36px 80px; }
+.co-step { padding-block: 22px; border-top: 1px solid var(--ink); }
+.co-step h3 { font-size: 30px; margin-bottom: 14px; display: flex; gap: 14px; align-items: baseline; }
+.co-step h3 i { color: var(--drop); font-size: 24px; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.field { display: grid; gap: 2px; font-size: 12px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin-bottom: 14px; }
+.field .input { text-transform: none; letter-spacing: 0; font-weight: 400; font-size: 16px; }
+.pays { display: grid; gap: 8px; }
+.pay { display: flex; gap: 14px; align-items: center; padding: 14px 16px; border: 1px solid var(--rule); text-align: left; }
+.pay.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.pay span { flex: 1; }
+.pay small { display: block; color: var(--mute); font-size: 13px; }
+.demo { background: var(--tint); padding: 12px 16px; font-size: 14px; margin: 16px 0 0; }
+.receipt { position: sticky; top: 80px; align-self: start; border: 1px solid var(--ink); padding: 22px; background: var(--card); }
+.receipt h3 { font-size: 28px; margin-bottom: 8px; }
+
+/* Thanks */
+.thanks { padding-block: 70px 90px; text-align: center; }
+.thanks h1 { font-size: clamp(60px, 11vw, 170px); line-height: .86; letter-spacing: -.04em; font-style: italic; }
+.thanks .steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; margin: 44px auto 30px; max-width: 880px; text-align: left; border-top: 1px solid var(--ink); }
+.thanks .steps div { padding: 14px 14px 0 0; }
+.thanks .steps b { display: block; font-family: var(--display); font-size: 20px; font-weight: 400; }
+
+.toast { position: fixed; z-index: 70; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translate(-50%, 160%); background: var(--ink); color: var(--paper); padding: 13px 20px; font-size: 14px; max-width: calc(100% - 32px); transition: transform .45s var(--ease); visibility: hidden; }
+.toast.on { transform: translate(-50%, 0); visibility: visible; }
+
+main { animation: in .6s var(--ease); }
+@keyframes in { from { opacity: 0; transform: translateY(10px); } }
+.swing { transform-box: view-box; transform-origin: 150px 18px; animation: sway 8s ease-in-out infinite; }
+@keyframes sway { 0%, 100% { transform: rotate(-1.2deg); } 50% { transform: rotate(1.2deg); } }
+
+@media (max-width: 1000px) {
+  .contents { grid-template-columns: 1fr 1fr; }
+  .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .colophon { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 760px) {
+  .topline nav { display: none; }
+  .topline .wrap { grid-template-columns: 1fr auto; }
+  .mini-mast { opacity: 1; font-size: 20px; }
+  .cover, .feature, .store, .spread, .co { grid-template-columns: minmax(0, 1fr); }
+  .cover-art { min-height: 460px; }
+  .cover-lines { padding: 24px 0; }
+  .contents { grid-template-columns: minmax(0, 1fr); }
+  .stagger a:nth-child(2) { margin-top: 40px; }
+  .stagger a:nth-child(3) { margin-top: 14px; }
+  .sec { padding-block: 52px; }
+  .sec-head { grid-template-columns: 1fr; gap: 6px; }
+  .sec-head .rule { display: none; }
+  .drop-band .wrap { grid-template-columns: minmax(0, 1fr); }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 14px; }
+  .spread .left-page { min-height: 480px; }
+  .right-page { padding: 26px 0 30px; }
+  .pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .thanks .steps { grid-template-columns: 1fr 1fr; }
+  .row2 { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .receipt { position: static; }
+  .l-row { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; }
+  .l-row .nm span { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition-duration: .001ms !important; }
+}
+</style>
+
+<div class="preview-band" role="note"><b>Design preview</b> made for The Hanger by Nemnidhi · direction 2 of 4: the editorial magazine · not a live shop · nothing you type is sent anywhere</div>
+
+<div class="topline" id="topline">
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a href="#home" data-nav="home">This issue</a>
+      <a href="#index" data-nav="index">Index</a>
+      <a href="#home-store" data-nav="store">The store</a>
+    </nav>
+    <a class="mini-mast" href="#home" aria-label="The Hanger, this issue">The Hanger</a>
+    <button class="bag-btn" onclick="openBag()" aria-label="Open bag">Bag <span class="n num" id="bagN">0</span></button>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<footer>
+  <div class="wrap">
+    <div class="colophon">
+      <div>
+        <h4 class="label">Colophon</h4>
+        <p class="mute" style="max-width:46ch;margin:0">The Hanger is a western wear boutique in Indore. Every issue is a small batch picked by hand; when a look sells out, it does not come back. Garments in this preview are drawn stand-ins until the photo shoot.</p>
+      </div>
+      <div><h4 class="label">Shop</h4><a href="#index">The index</a><a href="#index-Dresses">Dresses</a><a href="#index-Tops">Tops</a><a href="#index-Co-ords">Co-ords</a></div>
+      <div><h4 class="label">Help</h4><a href="#home">Size exchange in 7 days</a><a href="#home">Cash on delivery</a><a href="#home">GST invoice on every order</a></div>
+      <div><h4 class="label">Visit</h4><a href="#home-store">MG Road, New Palasia</a><a href="#home-store">Daily, 11 am – 9 pm</a></div>
+    </div>
+    <div class="foot-mast">The Hanger</div>
+  </div>
+</footer>
+
+<div class="scrim" id="scrim" onclick="closeBag()"></div>
+<aside class="panel" id="panel" aria-label="Your bag"></aside>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const BAG_KEY = "hanger-bag-editorial";
+/* Shared by the three design previews: the demo catalogue, moods and the drawn garments. */
+const P = [
+  { code: "DRS-001", name: "Linen midi dress", cat: "Dresses", price: 1999, colour: "Sage", hex: "#9caf88", bg: "#eef2e7", type: "dress", fabric: "linen", moods: ["brunch", "getaway"], stock: { XS: 1, S: 2, M: 4, L: 2, XL: 0 }, fit: 0, isNew: true,
+    blurb: "Washed linen that only gets softer. A fitted bodice and a skirt that moves when you do.", fabricText: "100% linen, garment washed. Lined bodice.", pairs: ["JKT-002", "TOP-030"] },
+  { code: "DRS-002", name: "Satin slip dress", cat: "Dresses", price: 2499, colour: "Wine", hex: "#7a2e4f", bg: "#f4e3ea", type: "slip", fabric: "satin", moods: ["date"], stock: { S: 1, M: 2, L: 1 }, fit: -1, isNew: true,
+    blurb: "Cut on the bias so it falls like water. Adjustable straps, a cowl that catches the light.", fabricText: "Viscose satin with a soft sheen.", pairs: ["JKT-002", "DRS-021"] },
+  { code: "TOP-014", name: "Satin wrap top", cat: "Tops", price: 1299, colour: "Champagne", hex: "#dec6a0", bg: "#f6eee2", type: "wrap", fabric: "satin", moods: ["work", "date"], stock: { XS: 2, S: 1, M: 4, L: 2 }, fit: 0, isNew: true,
+    blurb: "Ties at the waist, the way you like it. Office by day, dinner by night.", fabricText: "Polyester satin, fully washable.", pairs: ["SKT-008", "JNS-030"] },
+  { code: "TOP-021", name: "Block-print cotton top", cat: "Tops", price: 899, colour: "Indigo", hex: "#3c4882", bg: "#e6e9f3", type: "tee", fabric: "print", moods: ["brunch", "getaway"], stock: { S: 2, M: 4, L: 2, XL: 1 }, fit: 1, isNew: false,
+    blurb: "Hand block-printed in Jaipur on breezy cotton. Every piece prints a little differently.", fabricText: "100% cotton, hand block-printed. Colour may vary slightly.", pairs: ["JNS-030", "SKT-008"] },
+  { code: "COR-005", name: "Linen co-ord set", cat: "Co-ords", price: 3299, colour: "Sand", hex: "#cdba96", bg: "#f3ede2", type: "coord", fabric: "linen", moods: ["work", "getaway"], stock: { S: 1, M: 3, L: 2 }, fit: 0, isNew: true,
+    blurb: "A boxy shirt and easy wide trousers. Wear together, or split them up all week.", fabricText: "Linen blend. Elastic back waist.", pairs: ["TOP-014", "JKT-002"] },
+  { code: "JNS-030", name: "Wide-leg jeans", cat: "Jeans", price: 1799, colour: "Mid blue", hex: "#5c7ca8", bg: "#e5ecf4", type: "jeans", fabric: "denim", moods: ["brunch", "work", "getaway"], stock: { 26: 2, 28: 4, 30: 3, 32: 1 }, fit: 0, isNew: false,
+    blurb: "High rise, a long wide leg, and the kind of blue that goes with everything.", fabricText: "Cotton denim with a little stretch.", pairs: ["TOP-014", "TOP-021"] },
+  { code: "SKT-008", name: "Pleated midi skirt", cat: "Skirts", price: 1499, colour: "Black", hex: "#2b2a2e", bg: "#ecebee", type: "skirt", fabric: "cotton", moods: ["work", "date"], stock: { S: 2, M: 4, L: 1 }, fit: 0, isNew: false,
+    blurb: "Knife pleats that swing as you walk. Dress it up or down with one change of shoes.", fabricText: "Crepe with permanent pleats. Hidden side zip.", pairs: ["TOP-014", "JKT-002"] },
+  { code: "JKT-002", name: "Cropped denim jacket", cat: "Jackets", price: 2799, colour: "Light wash", hex: "#96b0cc", bg: "#e8eff6", type: "jacket", fabric: "denim", moods: ["getaway", "brunch"], stock: { S: 1, M: 2, L: 2 }, fit: 1, isNew: true,
+    blurb: "The jacket that finishes every outfit. Cropped to sit right on high-waisted everything.", fabricText: "Rigid cotton denim, light wash.", pairs: ["DRS-001", "SKT-008"] },
+  { code: "DRS-014", name: "Tiered maxi dress", cat: "Dresses", price: 2699, colour: "Terracotta", hex: "#c0704f", bg: "#f6e5dc", type: "maxi", fabric: "cotton", moods: ["getaway", "brunch"], stock: { S: 2, M: 3, L: 1, XL: 1 }, fit: 1, isNew: false,
+    blurb: "Three soft tiers and a colour that looks like sunset. Made for holiday photos.", fabricText: "Cotton voile, lined to the knee.", pairs: ["JKT-002"] },
+  { code: "TOP-030", name: "Puff-sleeve top", cat: "Tops", price: 1199, colour: "Ivory", hex: "#f1e9dc", bg: "#f5e4e2", type: "puff", fabric: "cotton", moods: ["brunch", "date"], stock: { XS: 1, S: 3, M: 3, L: 1 }, fit: 0, isNew: false,
+    blurb: "Romantic sleeves, a square neck and a smocked back that fits like it was made for you.", fabricText: "Cotton poplin with a smocked back.", pairs: ["JNS-030", "SKT-008"] },
+  { code: "DRS-021", name: "Ribbed knit midi", cat: "Dresses", price: 2299, colour: "Cocoa", hex: "#7b5544", bg: "#f1e6df", type: "knit", fabric: "knit", moods: ["date", "work"], stock: { S: 2, M: 2, L: 0 }, fit: -1, isNew: false,
+    blurb: "A close-fitting rib knit that holds its shape. Pairs with a denim jacket on cool evenings.", fabricText: "Viscose rib knit with stretch.", pairs: ["JKT-002"] },
+  { code: "DRS-030", name: "Linen shirt dress", cat: "Dresses", price: 2199, colour: "Powder blue", hex: "#a9c2d6", bg: "#e9f0f5", type: "shirtdress", fabric: "linen", moods: ["work", "brunch"], stock: { S: 1, M: 3, L: 2, XL: 1 }, fit: 0, isNew: false,
+    blurb: "A crisp collar, a tie belt and pockets. The easiest smart thing you'll own.", fabricText: "Linen-cotton blend. Removable belt.", pairs: ["JKT-002", "SKT-008"] },
+];
+const byCode = Object.fromEntries(P.map((p) => [p.code, p]));
+const rupees = (n) => "₹" + Math.round(n).toLocaleString("en-IN");
+const totalLeft = (p) => Object.values(p.stock).reduce((a, b) => a + b, 0);
+const FREE_SHIP = 1999;
+
+const MOODS = {
+  brunch: { name: "Sunday brunch", sub: "light, easy, golden", wash: "#f7e6bd", mc: "#fbe9c2", copy: "Soft linens and easy shapes — dressed up without ever looking like you tried.", icon: '<circle cx="12" cy="12" r="4.5"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8"/>' },
+  work: { name: "Big day at work", sub: "sharp, calm, sure", wash: "#dfe6ef", mc: "#dbe4f0", copy: "Clean lines that walk into the room a second before you do.", icon: '<rect x="3.5" y="7.5" width="17" height="12" rx="2"/><path d="M9 7.5V5.5a1.5 1.5 0 011.5-1.5h3A1.5 1.5 0 0115 5.5v2"/>' },
+  date: { name: "Date night", sub: "a little shine", wash: "#f2d6df", mc: "#f4d3de", copy: "Satin, a soft glow, and the kind of confidence you can feel across the table.", icon: '<path d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/>' },
+  getaway: { name: "Weekend getaway", sub: "packs small, shoots big", wash: "#dcebdf", mc: "#d6eadb", copy: "Pieces that fold small in a bag and look beautiful in every photo.", icon: '<path d="M3 17l7-10 4 6 2-3 5 7z"/><circle cx="17" cy="6" r="2"/>' },
+};
+
+/* ---------------------------------------------------------------------------------------------
+   Garment art. Each piece hangs on the brand's hanger and sways. Shapes in a 300 x 400 box,
+   shoulders at y ~ 86. Fabric is a texture overlay clipped to the shape, then light and shade.
+--------------------------------------------------------------------------------------------- */
+const SHAPES = {
+  dress: { parts: ["M118 86 Q150 112 182 86 L196 96 Q198 130 186 168 L222 368 Q150 384 78 368 L114 168 Q102 130 104 96 Z"],
+    lines: ["M114 168 Q150 177 186 168", "M132 196 L114 362", "M150 180 L150 374", "M168 196 L186 362"] },
+  slip: { parts: ["M120 118 Q150 146 180 118 L186 176 Q196 270 210 366 Q150 381 90 366 Q104 270 114 176 Z"],
+    lines: ["M121 119 L124 87", "M179 119 L176 87", "M140 200 Q136 290 126 370", "M162 210 Q166 300 176 370", "M124 132 Q150 158 176 132"] },
+  wrap: { parts: ["M112 86 L72 112 L86 160 L112 140 L114 246 Q150 257 186 246 L188 140 L214 160 L228 112 L188 86 Q150 124 112 86 Z"],
+    lines: ["M150 121 Q142 180 114 228", "M112 140 L116 90", "M188 140 L184 90", "M114 228 l-16 30", "M114 228 l-3 34"] },
+  tee: { parts: ["M114 86 L76 104 L90 146 L112 134 L112 252 L188 252 L188 134 L210 146 L224 104 L186 86 Q150 108 114 86 Z"],
+    lines: ["M112 134 L114 92", "M188 134 L186 92", "M112 242 L188 242"] },
+  coord: { parts: ["M114 86 L84 102 L94 140 L114 130 L114 186 L186 186 L186 130 L206 140 L216 102 L186 86 L164 86 L150 106 L136 86 Z", "M112 198 L188 198 L206 372 L160 372 L150 262 L140 372 L94 372 Z"],
+    lines: ["M150 106 L150 186", "M136 86 L142 110 L150 106", "M164 86 L158 110 L150 106", "M112 208 L188 208", "M128 222 L118 370", "M172 222 L182 370"], dots: [[150, 126], [150, 146], [150, 166]] },
+  jeans: { parts: ["M104 92 L196 92 L214 372 L162 372 L150 182 L138 372 L86 372 Z"],
+    lines: ["M104 106 L196 106", "M150 106 L150 164", "M110 114 Q122 136 140 114", "M190 114 Q178 136 160 114", "M88 360 L138 360", "M162 360 L212 360"], clips: true },
+  skirt: { parts: ["M108 92 L192 92 L192 108 L108 108 Z", "M108 108 L192 108 L228 344 Q150 360 72 344 Z"],
+    lines: ["M120 108 L94 348", "M135 108 L122 352", "M150 108 L150 354", "M165 108 L178 352", "M180 108 L206 348"], clips: true },
+  jacket: { parts: ["M110 86 L74 104 L62 236 L86 238 L98 146 L108 140 L106 206 L194 206 L192 140 L202 146 L214 238 L238 236 L226 104 L190 86 L166 94 L150 150 L134 94 Z"],
+    lines: ["M150 150 L150 206", "M134 94 L120 124 L144 132", "M166 94 L180 124 L156 132", "M106 192 L194 192", "M116 152 L138 152", "M162 152 L184 152", "M98 146 L108 140", "M202 146 L192 140"], dots: [[150, 166], [150, 182]] },
+  maxi: { parts: ["M116 86 Q150 110 184 86 L194 98 Q196 128 186 158 L196 222 L208 292 L226 372 Q150 388 74 372 L92 292 L104 222 L114 158 Q104 128 106 98 Z"],
+    lines: ["M114 158 Q150 166 186 158", "M104 222 Q150 232 196 222", "M92 292 Q150 304 208 292"] },
+  puff: { parts: ["M118 94 Q150 112 182 94 L186 130 L188 238 Q150 248 112 238 L114 130 Z", "M118 94 Q74 92 76 130 Q82 154 114 138 Z", "M182 94 Q226 92 224 130 Q218 154 186 138 Z"],
+    lines: ["M118 104 Q150 120 182 104", "M92 108 Q96 128 112 134", "M208 108 Q204 128 188 134", "M114 214 L186 214", "M114 222 L186 222"] },
+  knit: { parts: ["M118 86 Q150 106 182 86 L190 100 Q186 140 186 170 Q180 262 192 362 Q150 374 108 362 Q120 262 114 170 Q114 140 110 100 Z"],
+    lines: ["M118 100 Q150 118 182 100"] },
+  shirtdress: { parts: ["M112 86 L82 104 L92 146 L112 134 L112 172 L96 370 Q150 382 204 370 L188 172 L188 134 L208 146 L218 104 L188 86 L164 86 L150 104 L136 86 Z"],
+    lines: ["M150 104 L150 376", "M136 86 L142 110 L150 104", "M164 86 L158 110 L150 104", "M126 220 L112 360", "M174 220 L188 360"], belt: "M110 166 L190 166 L190 180 L110 180 Z", dots: [[150, 126], [150, 148], [150, 206], [150, 236], [150, 266]] },
+};
+
+let uid = 0;
+function shade(hex, amt) {
+  const n = parseInt(hex.slice(1), 16);
+  const f = (c) => Math.max(0, Math.min(255, Math.round(c + (amt < 0 ? c * amt : (255 - c) * amt))));
+  return "#" + [f(n >> 16), f((n >> 8) & 255), f(n & 255)].map((v) => v.toString(16).padStart(2, "0")).join("");
+}
+function fabricDefs(id, p) {
+  const light = shade(p.hex, .55);
+  switch (p.fabric) {
+    case "linen": return `<filter id="${id}t" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".95 .08" numOctaves="2" seed="${uid}"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .55 -.18"/></filter>`;
+    case "satin": return `<linearGradient id="${id}t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".3" stop-color="#fff" stop-opacity=".42"/><stop offset=".44" stop-color="#fff" stop-opacity="0"/><stop offset=".64" stop-color="#fff" stop-opacity=".26"/><stop offset=".8" stop-color="#fff" stop-opacity="0"/></linearGradient>`;
+    case "denim": return `<pattern id="${id}t" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="5" height="5" fill="none"/><path d="M0 0V5" stroke="#fff" stroke-opacity=".16" stroke-width="1.6"/></pattern>`;
+    case "print": return `<pattern id="${id}t" width="30" height="30" patternUnits="userSpaceOnUse"><g fill="${light}" fill-opacity=".75"><circle cx="15" cy="15" r="2.6"/><ellipse cx="15" cy="8.5" rx="2" ry="3.6"/><ellipse cx="15" cy="21.5" rx="2" ry="3.6"/><ellipse cx="8.5" cy="15" rx="3.6" ry="2"/><ellipse cx="21.5" cy="15" rx="3.6" ry="2"/><circle cx="0" cy="0" r="1.6"/><circle cx="30" cy="30" r="1.6"/><circle cx="30" cy="0" r="1.6"/><circle cx="0" cy="30" r="1.6"/></g></pattern>`;
+    case "knit": return `<pattern id="${id}t" width="7" height="10" patternUnits="userSpaceOnUse"><path d="M3.5 0V10" stroke="#000" stroke-opacity=".16" stroke-width="2.2"/></pattern>`;
+    default: return `<filter id="${id}t" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="${uid}"/><feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .3 -.1"/></filter>`;
+  }
+}
+function fabricLayer(id, p) {
+  if (p.fabric === "linen" || p.fabric === "cotton") return `<rect width="300" height="400" filter="url(#${id}t)"/>`;
+  return `<rect width="300" height="400" fill="url(#${id}t)"/>`;
+}
+const HANGER = `<path d="M150 52 C150 43 161 41 161 31 C161 23 155 18 148 19 C142 20 139 25 140 30" fill="none" stroke="#a5875d" stroke-width="3.4" stroke-linecap="round"/><path d="M150 52 V57 L79 87 Q73 91 80 92 H220 Q227 91 221 87 L150 57" fill="none" stroke="#b8925a" stroke-width="4.5" stroke-linejoin="round"/>`;
+
+function garment(p, { viewBox = "0 0 300 400", cls = "", label = true, hanger = true } = {}) {
+  const id = "g" + (uid += 1);
+  const s = SHAPES[p.type];
+  const dark = shade(p.hex, -.28);
+  const isLight = parseInt(p.hex.slice(1, 3), 16) > 200;
+  const lineCol = isLight ? "rgba(90,70,50,.28)" : "rgba(0,0,0,.22)";
+  const clips = s.clips ? `<g fill="#c9a56c"><rect x="108" y="82" width="14" height="16" rx="2"/><rect x="178" y="82" width="14" height="16" rx="2"/></g>` : "";
+  const delay = (-(uid * 1.7) % 7).toFixed(2);
+  return `<svg class="garment ${cls}" viewBox="${viewBox}" ${label ? `role="img" aria-label="${p.name} in ${p.colour}"` : 'aria-hidden="true"'}>
+    <defs>
+      <clipPath id="${id}c">${s.parts.map((d) => `<path d="${d}"/>`).join("")}</clipPath>
+      <linearGradient id="${id}s" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity=".26"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+      <linearGradient id="${id}v" x1="0" y1="0" x2="0" y2="1"><stop offset=".55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".14"/></linearGradient>
+      ${fabricDefs(id, p)}
+    </defs>
+    <g class="${hanger ? "swing" : "still"}" style="animation-delay:${delay}s">
+      ${hanger ? HANGER : ""}
+      ${s.parts.map((d) => `<path d="${d}" fill="${p.hex}"/>`).join("")}
+      <g clip-path="url(#${id}c)">${fabricLayer(id, p)}<rect width="300" height="400" fill="url(#${id}s)"/><rect width="300" height="400" fill="url(#${id}v)"/></g>
+      <g fill="none" stroke="${lineCol}" stroke-width="1.5" stroke-linecap="round">${s.lines.map((d) => `<path d="${d}"/>`).join("")}</g>
+      ${s.belt ? `<path d="${s.belt}" fill="${dark}"/>` : ""}
+      ${(s.dots || []).map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3.2" fill="${isLight ? "#fffaf0" : shade(p.hex, .5)}" stroke="${lineCol}"/>`).join("")}
+      ${hanger ? clips : ""}
+    </g>
+  </svg>`;
+}
+
+
+
+/* Bag, kept in this browser only (design preview). */
+let bag = [];
+try { bag = JSON.parse(localStorage.getItem(BAG_KEY) || "[]").filter((l) => byCode[l.code] && byCode[l.code].stock[l.size] != null); } catch { bag = []; }
+const saveBag = () => { try { localStorage.setItem(BAG_KEY, JSON.stringify(bag)); } catch {} };
+const bagQty = () => bag.reduce((a, l) => a + l.qty, 0);
+const bagTotal = () => bag.reduce((a, l) => a + byCode[l.code].price * l.qty, 0);
+const deliveryFor = (total) => (total >= FREE_SHIP || !total ? 0 : 99);
+/** Adds one piece; returns a message when the size has run out. */
+function bagAdd(code, size) {
+  const p = byCode[code];
+  const line = bag.find((l) => l.code === code && l.size === size);
+  if ((line ? line.qty : 0) >= p.stock[size]) return `That's every ${size} we have in the ${p.name.toLowerCase()}.`;
+  if (line) line.qty += 1; else bag.push({ code, size, qty: 1 });
+  saveBag();
+  return "";
+}
+function bagStep(i, d) {
+  const l = bag[i];
+  l.qty = Math.max(0, Math.min(byCode[l.code].stock[l.size], l.qty + d));
+  if (!l.qty) bag.splice(i, 1);
+  saveBag();
+}
+const sizesOf = (p) => Object.keys(p.stock);
+const fitWords = (p) => (p.fit < 0 ? "Runs small: take one size up" : p.fit > 0 ? "Relaxed: size down for a closer fit" : "True to size");
+const leftWords = (n) => (n === 0 ? "Sold out" : n === 1 ? "1 left" : n <= 2 ? `${n} left` : "");
+const PINS = { 452: ["Indore", "Madhya Pradesh"], 453: ["Indore", "Madhya Pradesh"], 462: ["Bhopal", "Madhya Pradesh"], 400: ["Mumbai", "Maharashtra"], 411: ["Pune", "Maharashtra"], 110: ["New Delhi", "Delhi"], 560: ["Bengaluru", "Karnataka"], 302: ["Jaipur", "Rajasthan"], 380: ["Ahmedabad", "Gujarat"] };
+const pinPlace = (pin) => (/^\d{6}$/.test(pin) ? PINS[pin.slice(0, 3)] || ["", ""] : null);
+const etaFor = (pin) => (/^45[23]/.test(pin) ? "Tomorrow, by 8 pm" : /^4[5-8]/.test(pin) ? "In 2 days" : "In 3 to 5 days");
+/** Routes are plain #names: "page" or "page-rest" (a product code keeps its own hyphen). */
+function parseHash() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ""));
+  const i = h.indexOf("-");
+  return i < 0 ? [h, ""] : [h.slice(0, i), h.slice(i + 1)];
+}
+const $ = (sel, root = document) => root.querySelector(sel);
+let toastTimer;
+function toast(msg) {
+  const t = $("#toast");
+  t.textContent = msg;
+  t.classList.add("on");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("on"), 3400);
+}
+
+
+const look = (p) => String(P.indexOf(p) + 1).padStart(2, "0");
+const plate = (p, opts = {}) => `<div class="plate" style="background:${p.bg}">${garment(p, opts)}</div>`;
+const ISSUE = { no: "07", month: "November 2026", pieces: 18 };
+
+function home() {
+  const c = byCode["DRS-002"];
+  return `
+  <div class="wrap">
+    <section class="mast">
+      <div class="mast-meta label" style="border-top:0;margin-top:0;padding-top:0"><span>Issue ${ISSUE.no}</span><span>Indore</span><span>${ISSUE.month}</span><span>${ISSUE.pieces} pieces · ₹899 to ₹3,299</span></div>
+      <h1>The H<i>a</i>nger</h1>
+      <div class="mast-meta issue-line"><span>Western wear, picked by hand, in small batches</span><span>When a look is gone, it's gone</span></div>
+    </section>
+    <section class="cover">
+      <a class="cover-art" href="#look-${c.code}" aria-label="Cover look: ${c.name}">
+        <div class="bigfig">${garment(c)}</div>
+        <span class="tag">Cover · Look ${look(c)} · ${rupees(c.price)}</span>
+        <span class="vert">Falls<br>like water.</span>
+      </a>
+      <div class="cover-lines">
+        <a class="cover-line" href="#look-${c.code}"><h3>The satin slip, cut on the bias</h3><span class="go">Look ${look(c)} →</span><p>One in S, two in M, one in L. The cover look sells first every issue.</p></a>
+        <a class="cover-line" href="#home-feature"><h3><em>Date night</em>, three ways</h3><span class="go">The edit →</span><p>Satin, a rib knit and a denim jacket for when the evening turns cool.</p></a>
+        <a class="cover-line" href="#index-Linen"><h3>Linen for slow Sundays</h3><span class="go">4 looks →</span><p>Washed linen that only gets softer, from the midi dress to the co-ord set.</p></a>
+        <a class="cover-line" href="#index-Under"><h3>Everything under ₹1,500</h3><span class="go">${P.filter((p) => p.price < 1500).length} looks →</span><p>The block-print top from Jaipur starts this issue at ₹899.</p></a>
+      </div>
+    </section>
+  </div>
+
+  <section class="sec" id="contents"><div class="wrap">
+    <div class="sec-head"><h2>In this <em>issue</em></h2><div class="rule"></div><a class="label" href="#index">The full index →</a></div>
+    <div class="contents">${P.map((p) => `<a class="c-row" href="#look-${p.code}"><span class="no num">${look(p)}</span><span class="nm">${p.name}<small>${p.colour} · ${p.cat}</small></span><span><span class="pr num">${rupees(p.price)}</span>${p.isNew ? `<br><span class="flag">New</span>` : ""}</span></a>`).join("")}</div>
+  </div></section>
+
+  <section class="sec" id="feature"><div class="wrap feature">
+    <div>
+      <div class="label mute">The edit · Date night</div>
+      <p class="pull" style="margin:16px 0 0">“A little shine, and the kind of confidence you can feel <span>across the table.</span>”</p>
+      <p class="standfirst">Three pieces for an evening out. The satin slip for the big night, the rib knit when you want it simpler, and the cropped denim jacket over either when Indore's winter evenings turn cool.</p>
+      <p class="byline label mute">Styled at the MG Road store</p>
+    </div>
+    <div class="stagger">${["DRS-002", "DRS-021", "JKT-002"].map((code) => { const p = byCode[code]; return `<a href="#look-${p.code}">${plate(p)}<div class="caption"><i>Look ${look(p)}</i><span>${p.name}</span><b class="num">${rupees(p.price)}</b></div></a>`; }).join("")}</div>
+  </div></section>
+
+  <section class="drop-band"><div class="wrap">
+    <div>
+      <div class="label">Next issue</div>
+      <h2 style="margin-top:12px">Issue 08 drops<br><em>Friday, 7 pm</em></h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:26px"><button class="btn on-drop" onclick="toast('In the live shop she gets a WhatsApp 10 minutes before the drop (design preview).')">Remind me on WhatsApp</button></div>
+    </div>
+    <div class="count" id="count" aria-label="Time to the next drop"></div>
+  </div></section>
+
+  <section class="sec" id="store"><div class="wrap store">
+    <div>
+      <div class="label mute">The store</div>
+      <h2 style="margin-top:12px">Try it on<br><em>before it's yours</em></h2>
+      <p class="standfirst">Order online and pick it up, or ask us to keep three pieces aside for a day. Come in, try them, and pay only for what you keep.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:20px"><a class="btn solid" href="#index">Choose pieces to try</a></div>
+    </div>
+    <div class="facts">
+      <div><span class="label mute">Address</span><b>MG Road, New Palasia, Indore</b></div>
+      <div><span class="label mute">Open</span><b>Daily, 11 am – 9 pm</b></div>
+      <div><span class="label mute">Exchanges</span><b>Any size within 7 days</b></div>
+      <div><span class="label mute">Delivery</span><b>Free above ₹1,999</b></div>
+      <div><span class="label mute">Pay</span><b>UPI, cards or cash on delivery</b></div>
+      <div><span class="label mute">Invoice</span><b>GST invoice with every order</b></div>
+    </div>
+  </div></section>`;
+}
+
+const CAT_FILTERS = ["All", "Dresses", "Tops", "Co-ords", "Jeans", "Skirts", "Jackets", "Linen", "Under"];
+const catLabel = (c) => (c === "Under" ? "Under ₹1,500" : c);
+let indexView = "spread";
+try { indexView = localStorage.getItem("hanger-ed-view") || "spread"; } catch {}
+function filterBy(c) {
+  if (!c || c === "All") return P;
+  if (c === "Linen") return P.filter((p) => p.fabric === "linen");
+  if (c === "Under") return P.filter((p) => p.price < 1500);
+  return P.filter((p) => p.cat === c);
+}
+function indexPage(sub) {
+  const cat = CAT_FILTERS.includes(sub) ? sub : "All";
+  return `<div class="wrap">
+    <div class="page-head"><div class="label mute">Issue ${ISSUE.no} · ${ISSUE.month}</div><h1>The <em>index</em></h1></div>
+    <div class="tools">
+      <div class="cats" role="tablist">${CAT_FILTERS.map((c) => `<button class="${c === cat ? "on" : ""}" onclick="location.hash='#index${c === "All" ? "" : "-" + c}'">${catLabel(c)}</button>`).join("")}</div>
+      <div class="views" role="group" aria-label="View"><button id="vSpread" onclick="setView('spread')">Spread</button><button id="vList" onclick="setView('list')">Index</button></div>
+    </div>
+    <div id="items" data-cat="${cat}"></div>
+  </div>`;
+}
+function drawIndex() {
+  const box = $("#items");
+  const items = filterBy(box.dataset.cat);
+  $("#vSpread").classList.toggle("on", indexView === "spread");
+  $("#vList").classList.toggle("on", indexView === "list");
+  box.innerHTML = indexView === "spread"
+    ? `<div class="grid">${items.map((p) => { const n = totalLeft(p); return `<a href="#look-${p.code}"><div class="plate" style="background:${p.bg}">${garment(p)}<span class="no">${look(p)}</span>${n <= 4 ? `<span class="left">${n} left</span>` : ""}</div><div class="caption"><span>${p.name}</span><b class="num">${rupees(p.price)}</b></div></a>`; }).join("")}</div>`
+    : `<div class="list">${items.map((p) => `<a class="l-row" href="#look-${p.code}"><span class="no num">${look(p)}</span><span class="nm"><b>${p.name}</b><i class="dots"></i><span>${p.colour}</span></span><span class="pr num">${rupees(p.price)}</span></a>`).join("")}</div>`;
+}
+function setView(v) { indexView = v; try { localStorage.setItem("hanger-ed-view", v); } catch {} drawIndex(); }
+
+let chosen = "";
+const VIEWS = [{ vb: "0 0 300 400" }, { vb: "70 60 160 210" }, { vb: "90 170 120 160" }];
+function lookPage(code) {
+  const p = byCode[code];
+  if (!p) return `<div class="wrap empty"><h3>That look has left the rail.</h3><p><a class="btn solid" href="#index">See the index</a></p></div>`;
+  chosen = "";
+  const i = P.indexOf(p);
+  const prev = P[(i - 1 + P.length) % P.length], next = P[(i + 1) % P.length];
+  return `<div class="wrap"><section class="spread">
+    <div class="left-page" style="background:${p.bg}">
+      <div class="plate" id="bigPlate" style="background:${p.bg}">${garment(p)}</div>
+      <span class="folio label">Issue ${ISSUE.no} · page ${String(i * 2 + 12).padStart(2, "0")}</span>
+      <div class="views3">${VIEWS.map((v, k) => `<button class="${k ? "" : "on"}" aria-label="View ${k + 1}" onclick="zoom(${k})">${garment(p, { viewBox: v.vb, label: false })}</button>`).join("")}</div>
+    </div>
+    <div class="right-page">
+      <div class="lookno"><b>Look ${look(p)}</b><span class="label mute">${p.cat}${p.isNew ? " · New this issue" : ""}</span></div>
+      <h1>${p.name.replace(/ (\S+)$/, " <em>$1</em>")}</h1>
+      <div class="price num">${rupees(p.price)}<small>GST included</small></div>
+      <p class="stand" style="margin:0">${p.blurb}</p>
+      <div>
+        <div class="label" style="margin-bottom:10px">Size</div>
+        <div class="sizes">${sizesOf(p).map((s) => `<button class="size" data-s="${s}" ${p.stock[s] ? "" : "disabled"} onclick="pick('${s}')">${s}<small>${leftWords(p.stock[s])}</small></button>`).join("")}</div>
+      </div>
+      <button class="btn solid block" id="addBtn" onclick="add('${p.code}')">Choose a size</button>
+      <dl class="credits">
+        <dt>Fit</dt><dd>${fitWords(p)}</dd>
+        <dt>Fabric</dt><dd>${p.fabricText}</dd>
+        <dt>Colour</dt><dd>${p.colour}</dd>
+        <dt>Pair with</dt><dd>${p.pairs.map((c) => `<a href="#look-${c}">${byCode[c].name}, look ${look(byCode[c])}</a>`).join(" · ")}</dd>
+        <dt>Delivery</dt><dd><div class="pin"><input class="input" id="pinIn" inputmode="numeric" maxlength="6" placeholder="Your pincode" aria-label="Pincode" oninput="pinCheck(this.value)" /></div><div id="pinOut" class="mute" style="font-size:13.5px;padding-top:6px">Free above ₹1,999 · cash on delivery · size exchange in 7 days</div></dd>
+        <dt>Try it on</dt><dd><button style="border-bottom:1px solid var(--rule)" onclick="toast('In the live shop the store keeps this aside for a day (design preview).')">Keep it aside at MG Road for a day</button></dd>
+      </dl>
+    </div>
+  </section>
+  <nav class="turn" aria-label="Turn the page"><a href="#look-${prev.code}"><span class="label mute">← Look ${look(prev)}</span><i>${prev.name}</i></a><a href="#look-${next.code}"><span class="label mute">Look ${look(next)} →</span><i>${next.name}</i></a></nav>
+  <div class="sec-head" style="margin:30px 0 0"><h2 style="font-size:clamp(34px,4vw,56px)">Wear it <em>with</em></h2><div class="rule"></div><span></span></div>
+  <div class="pairs">${[...p.pairs, ...P.filter((q) => q !== p && !p.pairs.includes(q) && q.moods.some((m) => p.moods.includes(m)))].slice(0, 4).map((c) => { const q = typeof c === "string" ? byCode[c] : c; return `<a href="#look-${q.code}">${plate(q)}<div class="caption"><i>Look ${look(q)}</i><span>${q.name}</span><b class="num">${rupees(q.price)}</b></div></a>`; }).join("")}</div>
+  </div>`;
+}
+function zoom(k) {
+  const p = byCode[parseHash()[1]];
+  $("#bigPlate").innerHTML = garment(p, { viewBox: VIEWS[k].vb });
+  document.querySelectorAll(".views3 button").forEach((b, j) => b.classList.toggle("on", j === k));
+}
+function pick(s) {
+  chosen = s;
+  document.querySelectorAll(".size").forEach((b) => b.classList.toggle("on", b.dataset.s === s));
+  $("#addBtn").textContent = `Add size ${s} to bag`;
+}
+function add(code) {
+  if (!chosen) { toast("Choose a size first."); $(".sizes").scrollIntoView({ behavior: "smooth", block: "center" }); return; }
+  const msg = bagAdd(code, chosen);
+  if (msg) return toast(msg);
+  updateN(); openBag();
+}
+function pinCheck(v) {
+  const place = pinPlace(v);
+  $("#pinOut").innerHTML = place ? `<b style="color:var(--ink)">${etaFor(v)}</b>${place[0] ? ` to ${place[0]}` : ""} · cash on delivery available` : "Free above ₹1,999 · cash on delivery · size exchange in 7 days";
+}
+
+function updateN() { $("#bagN").textContent = bagQty(); }
+function openBag() { drawBag(); $("#panel").classList.add("on"); $("#scrim").classList.add("on"); }
+function closeBag() { $("#panel").classList.remove("on"); $("#scrim").classList.remove("on"); }
+function drawBag() {
+  const t = bagTotal(), d = deliveryFor(t), away = Math.max(0, FREE_SHIP - t);
+  $("#panel").innerHTML = `<div class="panel-head"><h2>Your <em>bag</em></h2><button class="label" onclick="closeBag()">Close ✕</button></div>
+  <div class="panel-body">${bag.length ? bag.map((l, i) => { const p = byCode[l.code]; return `<div class="b-row"><a href="#look-${p.code}" onclick="closeBag()">${plate(p, { label: false })}</a><div><b>${p.name}</b><span class="mute" style="font-size:13px">Look ${look(p)} · size ${l.size}</span><div class="qty"><button aria-label="One less" onclick="step(${i},-1)">−</button><span class="num">${l.qty}</span><button aria-label="One more" onclick="step(${i},1)">+</button></div></div><b class="num" style="font-family:var(--text);font-size:15px;font-weight:600">${rupees(p.price * l.qty)}</b></div>`; }).join("") : `<div class="empty"><h3>Nothing here yet</h3><p class="mute">The cover look is a good place to start.</p><a class="btn solid" href="#look-DRS-002" onclick="closeBag()">See the cover look</a></div>`}</div>
+  ${bag.length ? `<div class="panel-foot">
+    <div class="sum mute"><span>${away ? `${rupees(away)} more for free delivery` : "Free delivery unlocked"}</span><span></span></div>
+    <div class="meter"><i style="width:${Math.min(100, (t / FREE_SHIP) * 100)}%"></i></div>
+    <div class="sum"><span>Pieces</span><span class="num">${rupees(t)}</span></div>
+    <div class="sum"><span>Delivery</span><span class="num">${d ? rupees(d) : "Free"}</span></div>
+    <div class="sum total"><span>Total, GST included</span><span class="num">${rupees(t + d)}</span></div>
+    <a class="btn solid block" href="#checkout" onclick="closeBag()" style="margin-top:8px">Checkout</a>
+  </div>` : ""}`;
+}
+function step(i, d) { bagStep(i, d); updateN(); drawBag(); }
+
+let pay = "upi";
+function checkoutPage() {
+  if (!bag.length) return `<div class="wrap empty"><h3>Your bag is empty.</h3><p><a class="btn solid" href="#index">See the index</a></p></div>`;
+  pay = "upi";
+  return `<div class="wrap">
+    <div class="page-head"><div class="label mute">Three steps, no account</div><h1><em>Checkout</em></h1><p class="demo">Design preview: no code is sent, no payment is taken and no order is placed. Try it with made-up details.</p></div>
+    <form class="co" id="coForm" novalidate>
+      <div>
+        <div class="co-step"><h3><i>i.</i>Your number</h3><div class="field">WhatsApp number<input class="input" id="coPhone" inputmode="tel" maxlength="10" placeholder="10-digit mobile number" /></div><p class="mute" style="margin:0;font-size:13.5px">Order updates and the GST invoice come on WhatsApp.</p></div>
+        <div class="co-step"><h3><i>ii.</i>Where it goes</h3>
+          <div class="row2"><div class="field">Full name<input class="input" id="coName" placeholder="As on the doorbell" /></div><div class="field">Pincode<input class="input" id="coPin" inputmode="numeric" maxlength="6" placeholder="452010" oninput="coPinFill()" /></div></div>
+          <div class="field">House, street, area<input class="input" id="coAddr" placeholder="Flat 302, Silver Oak, Vijay Nagar" /></div>
+          <div class="row2"><div class="field">City<input class="input" id="coCity" /></div><div class="field">State<input class="input" id="coState" /></div></div>
+        </div>
+        <div class="co-step"><h3><i>iii.</i>How you pay</h3><div class="pays">
+          ${[["upi", "UPI", "GPay, PhonePe, Paytm or any UPI app"], ["card", "Card", "Debit or credit card"], ["cod", "Cash on delivery", "Pay the courier when it arrives"]].map(([k, a, b]) => `<button type="button" class="pay ${k === "upi" ? "on" : ""}" data-k="${k}" onclick="setPay('${k}')"><span>${a}<small>${b}</small></span></button>`).join("")}
+        </div></div>
+      </div>
+      <aside class="receipt" id="receipt"></aside>
+    </form>
+  </div>`;
+}
+function setPay(k) { pay = k; document.querySelectorAll(".pay").forEach((b) => b.classList.toggle("on", b.dataset.k === k)); drawReceipt(); }
+function coPinFill() {
+  const v = $("#coPin").value.replace(/\D/g, ""), place = pinPlace(v);
+  if (place && place[0]) { $("#coCity").value = place[0]; $("#coState").value = place[1]; }
+  drawReceipt();
+}
+function drawReceipt() {
+  const t = bagTotal(), d = deliveryFor(t), pin = ($("#coPin")?.value || "").replace(/\D/g, "");
+  $("#receipt").innerHTML = `<h3>Your <em>order</em></h3>
+    ${bag.map((l) => { const p = byCode[l.code]; return `<div class="sum" style="padding:8px 0;border-bottom:1px solid var(--rule)"><span>Look ${look(p)} · ${p.name} · ${l.size}${l.qty > 1 ? ` × ${l.qty}` : ""}</span><span class="num">${rupees(p.price * l.qty)}</span></div>`; }).join("")}
+    <div class="sum" style="padding-top:10px"><span>Delivery</span><span class="num">${d ? rupees(d) : "Free"}</span></div>
+    <div class="sum mute"><span>GST included</span><span class="num">${rupees(Math.round(t - t / 1.05))}</span></div>
+    <div class="sum total"><span>Total</span><span class="num">${rupees(t + d)}</span></div>
+    <p class="mute" style="font-size:13.5px">${/^\d{6}$/.test(pin) ? `Arrives: <b style="color:var(--ink)">${etaFor(pin)}</b>` : "Add your pincode to see the delivery day."}</p>
+    <button class="btn solid block" type="button" onclick="placeOrder()">${pay === "cod" ? "Place order, pay on delivery" : `Pay ${rupees(t + d)}`}</button>`;
+}
+let lastOrder = null;
+function placeOrder() {
+  const phone = $("#coPhone").value.replace(/\D/g, ""), pin = $("#coPin").value.replace(/\D/g, "");
+  if (phone.length !== 10) return toast("Add a 10-digit mobile number.");
+  if (!$("#coName").value.trim() || !$("#coAddr").value.trim() || pin.length !== 6) return toast("Add your name, address and a 6-digit pincode.");
+  lastOrder = { n: 1000 + Math.floor(Math.random() * 9000), eta: etaFor(pin), pay, total: bagTotal() + deliveryFor(bagTotal()), pieces: bag.map((l) => byCode[l.code].name) };
+  bag = []; saveBag(); updateN();
+  location.hash = "#thanks";
+}
+function thanksPage() {
+  if (!lastOrder) return `<div class="wrap empty"><h3>No order yet.</h3><p><a class="btn solid" href="#index">See the index</a></p></div>`;
+  return `<div class="wrap thanks">
+    <div class="label mute">Order HWH-${lastOrder.n} · ${rupees(lastOrder.total)} · ${lastOrder.pay === "cod" ? "cash on delivery" : "paid"} (design preview)</div>
+    <h1 style="margin-top:18px">It's yours.</h1>
+    <p class="stand" style="margin:22px auto 0;max-width:40ch">${lastOrder.pieces.join(", ")}. Wrapped in tissue at MG Road and on its way ${lastOrder.eta.toLowerCase()}.</p>
+    <div class="steps">${[["Today", "Packed by hand"], ["Courier", "Tracking on WhatsApp"], [lastOrder.eta, "At your door"], ["7 days", "Free size exchange"]].map(([a, b]) => `<div><span class="label mute">${a}</span><b>${b}</b></div>`).join("")}</div>
+    <a class="btn solid" href="#index">Back to the index</a>
+  </div>`;
+}
+
+let countTimer;
+function nextDrop() { const d = new Date(); const x = new Date(d); x.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7)); x.setHours(19, 0, 0, 0); if (x <= d) x.setDate(x.getDate() + 7); return x; }
+function tick() {
+  const el = $("#count"); if (!el) return;
+  let s = Math.max(0, Math.floor((nextDrop() - new Date()) / 1000));
+  const parts = [["Days", Math.floor(s / 86400)], ["Hours", Math.floor(s / 3600) % 24], ["Min", Math.floor(s / 60) % 60], ["Sec", s % 60]];
+  el.innerHTML = parts.map(([k, v]) => `<div><b>${String(v).padStart(2, "0")}</b><span>${k}</span></div>`).join("");
+}
+
+function route() {
+  const [page, sub] = parseHash();
+  const main = $("#main");
+  clearInterval(countTimer);
+  closeBag();
+  if (page === "index") main.innerHTML = indexPage(sub);
+  else if (page === "look") main.innerHTML = lookPage(sub);
+  else if (page === "checkout") main.innerHTML = checkoutPage();
+  else if (page === "thanks") main.innerHTML = thanksPage();
+  else main.innerHTML = home();
+  main.style.animation = "none"; void main.offsetWidth; main.style.animation = "";
+  document.querySelectorAll(".topline nav a").forEach((a) => a.classList.toggle("on", a.dataset.nav === (page === "index" ? "index" : sub === "store" ? "store" : page === "home" || !page ? "home" : "")));
+  if (page === "index") drawIndex();
+  if (page === "checkout" && bag.length) drawReceipt();
+  if (!page || page === "home") { tick(); countTimer = setInterval(tick, 1000); }
+  if ((!page || page === "home") && sub) setTimeout(() => document.getElementById(sub)?.scrollIntoView({ behavior: "smooth" }), 60);
+  else window.scrollTo({ top: 0 });
+}
+window.addEventListener("hashchange", route);
+window.addEventListener("scroll", () => $("#topline").classList.toggle("scrolled", scrollY > 260), { passive: true });
+document.addEventListener("keydown", (e) => e.key === "Escape" && closeBag());
+updateN();
+route();
+</script>

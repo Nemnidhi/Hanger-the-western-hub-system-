@@ -15,6 +15,10 @@ const locationSchema = new mongoose.Schema(
     pincode: { type: String, default: "", match: /^$|^[1-9]\d{5}$/ },
     // Invoice prefix, 2-4 characters (e.g. "IN1"): with "/2627/00042" it stays within GST's 16.
     invoicePrefix: { type: String, required: true, uppercase: true, match: /^[A-Z0-9]{2,4}$/ },
+    // For delivery challans and e-way bills: the town, and the location's own GSTIN when it is in
+    // another state (blank = the business's GSTIN).
+    city: { type: String, default: "", trim: true, maxlength: 50 },
+    gstin: { type: String, default: "", trim: true, uppercase: true, match: /^$|^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/ },
     active: { type: Boolean, default: true },
   },
   { timestamps: true },
@@ -76,6 +80,15 @@ const styleSchema = new mongoose.Schema(
     supplierStyleRef: { type: String, default: "", trim: true, maxlength: 60 },
     status: { type: String, enum: ["draft", "live", "archived"], default: "draft" },
     liveAt: { type: Date, default: null },
+    // An active markdown (buying desk): public = the price above is already the marked-down price and
+    // listPaise is the old one; quiet = the price above stands and members pay memberPaise at the counter.
+    markdown: {
+      kind: { type: String, enum: ["", "public", "quiet"], default: "" },
+      listPaise: { type: Number, default: 0 },
+      memberPaise: { type: Number, default: 0 },
+      pct: { type: Number, default: 0 },
+      until: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

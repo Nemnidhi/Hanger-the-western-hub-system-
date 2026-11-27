@@ -29,8 +29,12 @@ const lineSchema = new mongoose.Schema(
     qty: { type: Number, required: true, min: 1, max: 20 },
     // GST-inclusive selling price per piece, and the GST rate it falls under.
     unitPaise: { type: Number, required: true, min: 0 },
+    // The catalogue price before this order's discount (0 = no discount on this line).
+    listUnitPaise: { type: Number, default: 0 },
     gstRate: { type: Number, required: true },
     hsn: { type: String, required: true },
+    // Pieces of this line that came back (returns can be partial).
+    returnedQty: { type: Number, default: 0, min: 0 },
   },
   { _id: false },
 );
@@ -48,6 +52,28 @@ const orderSchema = new mongoose.Schema(
     contactId: { type: ObjectId, ref: "Contact", default: null },
     conversationId: { type: ObjectId, ref: "Conversation", default: null },
     customer: { name: { type: String, default: "" }, phone: { type: String, default: "" } },
+    // Where the sale came from: the website's utm_* / fbclid on her first visit, or the
+    // Click-to-WhatsApp ad she tapped (adId, ctwaClid). ip / userAgent: website orders, for Meta only.
+    attribution: {
+      source: { type: String, default: "" },
+      medium: { type: String, default: "" },
+      campaign: { type: String, default: "" },
+      content: { type: String, default: "" },
+      adId: { type: String, default: "" },
+      fbclid: { type: String, default: "" },
+      ctwaClid: { type: String, default: "" },
+      landedAt: { type: Date, default: null },
+      ip: { type: String, default: "" },
+      userAgent: { type: String, default: "" },
+    },
+    // The Purchase sent to Meta's Conversions API (status "", sent, skipped, failed).
+    metaEvent: {
+      status: { type: String, default: "" },
+      at: { type: Date, default: null },
+      error: { type: String, default: "" },
+      received: { type: Number, default: 0 },
+      test: { type: Boolean, default: false },
+    },
     shipTo: {
       name: { type: String, default: "" },
       address: { type: String, default: "" },
@@ -75,6 +101,16 @@ const orderSchema = new mongoose.Schema(
       band: { type: String, enum: ["", "low", "medium", "high"], default: "" },
       reasons: { type: [String], default: [] },
       confirmedAt: { type: Date, default: null },
+    },
+    // A discount on the whole bill: a creator's code, a referral code (first bill), and / or points.
+    discount: {
+      code: { type: String, default: "" },
+      kind: { type: String, enum: ["", "creator", "referral"], default: "" },
+      creatorId: { type: ObjectId, ref: "Creator", default: null },
+      referrerId: { type: ObjectId, ref: "Contact", default: null },
+      codePaise: { type: Number, default: 0 },
+      pointsUsed: { type: Number, default: 0 },
+      pointsPaise: { type: Number, default: 0 },
     },
     status: { type: String, enum: ORDER_STATUSES, default: "draft" },
     // Where the WhatsApp conversation is in taking this order.
@@ -115,6 +151,8 @@ const orderSchema = new mongoose.Schema(
     },
     invoiceId: { type: ObjectId, ref: "Invoice", default: null },
     creditNoteId: { type: ObjectId, ref: "Invoice", default: null },
+    // Partial or whole returns of a delivered order, each with its own credit note.
+    returnIds: { type: [ObjectId], ref: "Return", default: [] },
     cancelReason: { type: String, default: "" },
     history: { type: [historySchema], default: [] },
   },
@@ -127,6 +165,7 @@ orderSchema.index({ contactId: 1, createdAt: -1 });
 orderSchema.index({ status: 1, holdUntil: 1 });
 orderSchema.index({ tenantId: 1, "payment.linkId": 1 });
 orderSchema.index({ tenantId: 1, "shipment.awb": 1 });
+orderSchema.index({ tenantId: 1, "discount.creatorId": 1, createdAt: -1 });
 
 export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
 

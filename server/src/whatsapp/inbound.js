@@ -3,6 +3,15 @@ export function readInboundMessage(message) {
   const type = String(message?.type || "unsupported");
   const at = message?.timestamp ? new Date(Number(message.timestamp) * 1000) : new Date();
   const base = { type, text: "", media: undefined, data: null, at };
+  const result = readBody(message, type, base);
+  const referral = message?.referral;
+  if (referral && (referral.source_id || referral.ctwa_clid)) {
+    result.referral = { sourceId: String(referral.source_id || ""), sourceType: String(referral.source_type || ""), headline: String(referral.headline || "").slice(0, 200), ctwaClid: String(referral.ctwa_clid || "") };
+  }
+  return result;
+}
+
+function readBody(message, type, base) {
 
   switch (type) {
     case "text":

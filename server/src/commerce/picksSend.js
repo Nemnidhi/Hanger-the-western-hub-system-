@@ -1,4 +1,5 @@
-import { Contact, Conversation, getSettings } from "../models/index.js";
+import mongoose from "mongoose";
+import { Contact, Conversation, Order, getSettings } from "../models/index.js";
 import { withTransaction } from "../db.js";
 import { enqueue } from "../jobs/queue.js";
 import { queueOutbound } from "../whatsapp/outbound.js";
@@ -75,18 +76,20 @@ export async function schedulePicksFollowUp({ tenantId, phone, pieces, now = new
   const waId = waIdFromPhone(phone);
   if (!waId || !pieces?.length) return null;
   const day = now.toISOString().slice(0, 10);
-  return enqueue("picks.followUp", { waId, pieces: pieces.slice(0, 6) }, { runAt: new Date(now.getTime() + (settings.picks.autoSendDelayMinutes || 60) * 60_000), dedupeKey: `picks:${waId}:${day}` });
+  return enqueue("picks.followUp", { waId, pieces: pieces.slice(0, 6), since: now.toISOString() }, { runAt: new Date(now.getTime() + (settings.picks.autoSendDelayMinutes || 60) * 60_000), dedupeKey: `picks:${waId}:${day}` });
 }
 
 export function createPicksHandlers({ config, now = () => new Date() }) {
   const tenantId = config.TENANT_ID;
   return {
     /** The automatic picks. A customer who bought in the meantime, or who did not agree, gets nothing. */
-    async "picks.followUp"({ waId, pieces }) {
+    async "picks.followUp"({ waId, pieces, since }) {
       const settings = await getSettings(tenantId);
       if (!settings.picks?.autoSend) return;
       const contact = await Contact.findOne({ tenantId, waId });
       if (!contact?.consents?.offers?.given) return;
+      // She ordered after leaving the bag: no picks.
+      if (since && (await Order.exists({ tenantId, contactId: contact._id, createdAt: mongoose.trusted({ $gte: new Date(since) }) }))) return;
       try {
         await sendPicks({ tenantId, config, phone: waId, pieces, automatic: true, now: now() });
       } catch (error) {

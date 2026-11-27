@@ -7,6 +7,12 @@ import { createSmsHandlers } from "./sms/handlers.js";
 import { createShippingHandlers } from "./shipping/courier.js";
 import { createPicksHandlers } from "./commerce/picksSend.js";
 import { createStudioHandlers } from "./studio/studio.js";
+import { createBroadcastHandlers } from "./commerce/broadcasts.js";
+import { createBuyingHandlers } from "./routes/buying.js";
+import { createBriefHandlers } from "./commerce/brief.js";
+import { createStylistHandlers } from "./commerce/stylist.js";
+import { createAdsHandlers } from "./ads/meta.js";
+import { createInstagramHandlers } from "./instagram/instagram.js";
 import { Order } from "./models/index.js";
 import { withTransaction } from "./db.js";
 import { expireHold } from "./commerce/orders.js";
@@ -24,6 +30,12 @@ export function createHandlers({ config, now = () => new Date(), services = crea
     ...createShippingHandlers({ config, courier, now }),
     ...createPicksHandlers({ config, now }),
     ...createStudioHandlers({ config, services }),
+    ...createBroadcastHandlers({ config, now }),
+    ...createBuyingHandlers({ config, now }),
+    ...createBriefHandlers({ config, now }),
+    ...createStylistHandlers({ config, now }),
+    ...createAdsHandlers({ config, fetchImpl, now }),
+    ...createInstagramHandlers({ config, fetchImpl, now }),
     // A held cart that was not paid / confirmed / given an address in time gives its stock back.
     async "order.holdExpiry"({ orderId }) {
       await withTransaction(async (session) => {

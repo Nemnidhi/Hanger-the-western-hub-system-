@@ -5,7 +5,7 @@ import type { Invoice } from "../types";
 // A GST tax invoice or credit note, laid out for A4 or an 80 mm counter printer (the page adapts).
 // Opened at #invoice/<id>; the browser's print dialog does the rest.
 
-function words(paise: number): string {
+export function words(paise: number): string {
   const ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
   const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
   const two = (n: number) => (n < 20 ? ones[n] : `${tens[Math.floor(n / 10)]}${n % 10 ? ` ${ones[n % 10]}` : ""}`);

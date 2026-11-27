@@ -238,8 +238,9 @@ export async function customerProfile({ tenantId, contact, waId, letter = "", wa
   if (phones.length) or.push({ "customer.phone": mongoose.trusted({ $in: phones }) });
   const orders = or.length ? await Order.find({ tenantId, $or: or }).sort({ createdAt: -1 }).limit(50).lean() : [];
   const kept = orders.filter((order) => BOUGHT_STATUSES.includes(order.status));
-  const returned = orders.filter((order) => order.status === "returned");
-  const keptLines = kept.flatMap((order) => order.lines);
+  // Pieces she kept, and the styles she sent back (whole orders or one piece of one).
+  const keptLines = kept.flatMap((order) => order.lines.filter((line) => line.qty > (line.returnedQty || 0)));
+  const returnedLines = orders.flatMap((order) => order.lines.filter((line) => order.status === "returned" || (line.returnedQty || 0) > 0));
   const styleCodes = [...new Set(keptLines.map((line) => line.styleCode))];
   const styles = styleCodes.length ? await Style.find({ tenantId, code: mongoose.trusted({ $in: styleCodes }) }).lean() : [];
   const prices = keptLines.map((line) => line.unitPaise).sort((a, b) => a - b);
@@ -249,7 +250,7 @@ export async function customerProfile({ tenantId, contact, waId, letter = "", wa
     letter: letter || contact?.fit?.usualSize || mostCommon(sizes.filter((size) => !isNumeric(size) && size !== "FREE")),
     waist: waist || contact?.fit?.waist || mostCommon(sizes.filter(isNumeric)),
     bought: styleCodes,
-    returned: [...new Set(returned.flatMap((order) => order.lines.map((line) => line.styleCode)))],
+    returned: [...new Set(returnedLines.map((line) => line.styleCode))],
     // Her usual spend: from her cheapest to her dearest piece, with a little room either side.
     band: prices.length >= 2 ? [Math.round((prices[0] * 0.85) / 10000) * 10000, Math.round((prices.at(-1) * 1.15) / 10000) * 10000] : null,
     colours: [...new Set(styles.map((style) => lower(style.attributes?.colour)).filter(Boolean))],

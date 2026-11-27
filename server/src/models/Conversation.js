@@ -14,6 +14,10 @@ const conversationSchema = new mongoose.Schema(
     unread: { type: Number, default: 0 },
     // The automatic welcome menu goes out at most once in 12 hours.
     welcomedAt: { type: Date, default: null },
+    // The WhatsApp stylist stays quiet in this chat until then (it handed over, or staff turned it off).
+    stylistOffUntil: { type: Date, default: null },
+    // Why the stylist handed over, for the inbox ("wants to exchange the dress for an M").
+    stylistNote: { type: String, default: "" },
   },
   { timestamps: true },
 );

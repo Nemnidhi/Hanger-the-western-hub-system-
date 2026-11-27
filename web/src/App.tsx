@@ -10,19 +10,27 @@ import { TrialRoom } from "./pages/TrialRoom";
 import { Catalogue } from "./pages/Catalogue";
 import { Studio } from "./pages/Studio";
 import { Stock } from "./pages/Stock";
+import { Reports } from "./pages/Reports";
+import { Broadcasts } from "./pages/Broadcasts";
+import { Customers } from "./pages/Customers";
+import { Buying } from "./pages/Buying";
 import { Templates } from "./pages/Templates";
 import { SettingsPage } from "./pages/SettingsPage";
 import { Team } from "./pages/Team";
 import { Account } from "./pages/Account";
 import { InvoicePrint } from "./pages/InvoicePrint";
+import { Challan } from "./pages/Challan";
+import { Ads } from "./pages/Ads";
+import { Instagram } from "./pages/Instagram";
 
-type Page = "today" | "inbox" | "orders" | "counter" | "trial" | "catalogue" | "studio" | "stock" | "templates" | "settings" | "team" | "account";
-const PAGES: Page[] = ["today", "inbox", "orders", "counter", "trial", "catalogue", "studio", "stock", "templates", "settings", "team", "account"];
+type Page = "today" | "inbox" | "instagram" | "orders" | "counter" | "trial" | "catalogue" | "studio" | "stock" | "reports" | "ads" | "buying" | "customers" | "broadcasts" | "templates" | "settings" | "team" | "account";
+const PAGES: Page[] = ["today", "inbox", "instagram", "orders", "counter", "trial", "catalogue", "studio", "stock", "reports", "ads", "buying", "customers", "broadcasts", "templates", "settings", "team", "account"];
 
-function readHash(): { page: Page; invoiceId: string } {
+function readHash(): { page: Page; invoiceId: string; challanId: string } {
   const [first, second] = window.location.hash.replace(/^#\/?/, "").split("/");
-  if (first === "invoice" && /^[0-9a-f]{24}$/.test(second || "")) return { page: "today", invoiceId: second };
-  return { page: (PAGES.includes(first as Page) ? first : "today") as Page, invoiceId: "" };
+  if (first === "invoice" && /^[0-9a-f]{24}$/.test(second || "")) return { page: "today", invoiceId: second, challanId: "" };
+  if (first === "challan" && /^[0-9a-f]{24}$/.test(second || "")) return { page: "stock", invoiceId: "", challanId: second };
+  return { page: (PAGES.includes(first as Page) ? first : "today") as Page, invoiceId: "", challanId: "" };
 }
 
 export function App() {
@@ -57,6 +65,7 @@ export function App() {
   if (loading) return <div className="empty">Loading…</div>;
   if (!me || me.next) return <SignIn me={me} onSignedIn={setMe} />;
   if (route.invoiceId) return <InvoicePrint id={route.invoiceId} />;
+  if (route.challanId) return <Challan id={route.challanId} me={me} />;
 
   async function signOut() {
     await api("/api/auth/logout", { method: "POST", body: {} }).catch(() => undefined);
@@ -66,12 +75,18 @@ export function App() {
   const links: { id: Page; label: string; show: boolean }[] = [
     { id: "today", label: "Today", show: can(me, "orders:read") },
     { id: "inbox", label: "Chats", show: can(me, "inbox:read") },
+    { id: "instagram", label: "Instagram", show: can(me, "inbox:read") },
     { id: "orders", label: "Orders", show: can(me, "orders:read") },
     { id: "counter", label: "Counter", show: can(me, "orders:write") },
     { id: "trial", label: "Trial room", show: can(me, "catalog:read") },
     { id: "catalogue", label: "Catalogue", show: can(me, "catalog:read") },
     { id: "studio", label: "Photo studio", show: can(me, "catalog:write") || can(me, "studio:use") },
     { id: "stock", label: "Stock", show: can(me, "stock:read") },
+    { id: "reports", label: "Reports", show: can(me, "reports:read") },
+    { id: "ads", label: "Ads", show: can(me, "reports:read") },
+    { id: "buying", label: "Buying", show: can(me, "reports:read") },
+    { id: "customers", label: "Customers", show: can(me, "orders:read") },
+    { id: "broadcasts", label: "Broadcasts", show: can(me, "broadcasts:send") },
     { id: "templates", label: "Templates", show: can(me, "templates:read") },
     { id: "settings", label: "Settings", show: can(me, "settings:read") },
     { id: "team", label: "Team", show: can(me, "users:manage") },
@@ -79,7 +94,7 @@ export function App() {
   ];
   const visible = links.filter((link) => link.show);
   const current = visible.some((link) => link.id === route.page) ? route.page : visible[0].id;
-  const fullHeight = current === "inbox" || current === "orders";
+  const fullHeight = current === "inbox" || current === "orders" || current === "instagram";
 
   return (
     <div className="shell">
@@ -110,6 +125,12 @@ export function App() {
         {current === "catalogue" && <Catalogue me={me} />}
         {current === "studio" && <Studio me={me} />}
         {current === "stock" && <Stock me={me} />}
+        {current === "reports" && <Reports />}
+        {current === "ads" && <Ads />}
+        {current === "instagram" && <Instagram me={me} />}
+        {current === "buying" && <Buying me={me} />}
+        {current === "customers" && <Customers me={me} />}
+        {current === "broadcasts" && <Broadcasts />}
         {current === "templates" && <Templates me={me} />}
         {current === "settings" && <SettingsPage me={me} />}
         {current === "team" && <Team me={me} />}

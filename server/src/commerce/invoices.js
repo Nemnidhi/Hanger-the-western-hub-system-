@@ -22,11 +22,12 @@ export function placeOfSupply(order, settings) {
 }
 
 /**
- * Writes the GST tax invoice for an order (once), or a credit note reversing it. Numbers come from a
- * counter inside the same transaction, so a rolled-back order leaves no gap in the series.
+ * Writes the GST tax invoice for an order (once), or a credit note reversing it: the whole invoice
+ * (cancellation, refusal), or with `returnId` and `lines` just the pieces of one return. Numbers come
+ * from a counter inside the same transaction, so a rolled-back order leaves no gap in the series.
  */
-export async function issueInvoice({ tenantId, order, settings, kind = "invoice", session, at = new Date() }) {
-  const existing = await Invoice.findOne({ orderId: order._id, kind }).session(session);
+export async function issueInvoice({ tenantId, order, settings, kind = "invoice", lines: someLines = null, returnId = null, session, at = new Date() }) {
+  const existing = await Invoice.findOne(returnId ? { returnId } : { orderId: order._id, kind, returnId: null }).session(session);
   if (existing) return existing;
   const original = kind === "credit_note" ? await Invoice.findOne({ orderId: order._id, kind: "invoice" }).session(session) : null;
   if (kind === "credit_note" && !original) return null;
@@ -41,8 +42,9 @@ export async function issueInvoice({ tenantId, order, settings, kind = "invoice"
   const serial = await nextNumber(`invoice:${tenantId}:${prefix}:${fy}`, session);
   const interState = original ? original.interState : pos.stateCode !== settings.stateCode;
 
-  const lines = order.lines.map((line) => ({
+  const lines = (someLines || order.lines).map((line) => ({
     description: `${line.name} - ${line.size} (${line.skuCode})`,
+    skuCode: line.skuCode,
     hsn: line.hsn,
     qty: line.qty,
     unitPaise: line.unitPaise,
@@ -61,6 +63,8 @@ export async function issueInvoice({ tenantId, order, settings, kind = "invoice"
         orderId: order._id,
         locationId: location._id,
         againstInvoiceId: original?._id || null,
+        returnId,
+        returnKey: returnId ? String(returnId) : "",
         seller: { legalName: settings.legalName || settings.brandName, gstin: settings.gstin, address: location.address || settings.registeredAddress, stateCode: settings.stateCode },
         buyer: { name: order.shipTo?.name || order.customer?.name || "", address: order.channel === "store" ? "" : buyerAddress(order.shipTo) },
         placeOfSupply: pos,

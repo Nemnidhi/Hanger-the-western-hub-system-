@@ -4,6 +4,7 @@ import { RetryableError } from "../jobs/queue.js";
 import { isDuplicateKeyError, withTransaction } from "../db.js";
 import { historyEntry, paymentReceived, tellCustomer } from "../commerce/orders.js";
 import * as say from "../commerce/messages.js";
+import { maybeAskOffers } from "../commerce/consent.js";
 import { isValidRazorpaySignature } from "./razorpay.js";
 
 /** The job that creates a payment link for a prepaid order and sends it to the customer. */
@@ -27,6 +28,8 @@ export function createPaymentHandlers({ config, razorpay, now = () => new Date()
           phone: contact?.waId,
           // Razorpay needs at least 15 minutes; the stock hold decides the real deadline.
           expiresAt: new Date(Math.max(order.holdUntil?.getTime() || 0, now().getTime() + 16 * 60_000)),
+          // A website order comes back to its page on the website after paying.
+          callbackUrl: order.channel === "website" && config.PUBLIC_STORE_URL ? `${config.PUBLIC_STORE_URL.replace(/\/$/, "")}/account/orders/${order._id}` : "",
         });
       } catch (error) {
         if (error.retryable) throw new RetryableError(error.message);
@@ -69,6 +72,11 @@ export function createRazorpayWebhookRouter({ config, logger, now = () => new Da
         const order = await Order.findOne({ tenantId: config.TENANT_ID, "payment.linkId": linkId }).session(session);
         if (!order) return;
         await paymentReceived({ tenantId: config.TENANT_ID, order, session, now: now() });
+        // Paid: the moment to ask, once, about offers (only while her chat window is open).
+        if (order.contactId) {
+          const contact = await Contact.findOne({ _id: order.contactId, tenantId: config.TENANT_ID }).session(session);
+          await maybeAskOffers({ tenantId: config.TENANT_ID, contact, brandName: (await getSettings(config.TENANT_ID, session)).brandName, session, now: now() });
+        }
       });
     } catch (error) {
       if (!isDuplicateKeyError(error)) {

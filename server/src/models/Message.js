@@ -41,9 +41,11 @@ const messageSchema = new mongoose.Schema(
     at: { type: Date, default: () => new Date() },
     // Outbound: what this message is for. Order messages carry an SMS fallback ({ kind, vars }) used
     // when WhatsApp cannot deliver; offers never do.
-    purpose: { type: String, enum: ["chat", "order", "refill", "offer", "consent", "picks"], default: "chat" },
+    purpose: { type: String, enum: ["chat", "order", "refill", "offer", "consent", "picks", "brief", "login", "stylist"], default: "chat" },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order", default: null },
-    offerId: { type: mongoose.Schema.Types.ObjectId, ref: "Offer", default: null },
+    offerId: { type: mongoose.Schema.Types.ObjectId, ref: "Broadcast", default: null },
+    // Outbound: the customer message this one answers (the stylist answers each message once).
+    replyTo: { type: mongoose.Schema.Types.ObjectId, default: null },
     fallback: { type: mongoose.Schema.Types.Mixed, default: null },
     // The SMS sent as backup for this message (or, for type "sms", the message itself).
     sms: {
@@ -61,6 +63,7 @@ messageSchema.index({ conversationId: 1, at: 1 });
 // One offer message per customer per offer, and the 7-day offer limit.
 messageSchema.index({ offerId: 1, contactId: 1 }, { unique: true, partialFilterExpression: { offerId: { $type: "objectId" } } });
 messageSchema.index({ contactId: 1, purpose: 1, createdAt: -1 });
+messageSchema.index({ replyTo: 1 }, { partialFilterExpression: { replyTo: { $type: "objectId" } } });
 messageSchema.index({ tenantId: 1, direction: 1, createdAt: -1 });
 
 export const Message = mongoose.models.Message || mongoose.model("Message", messageSchema);

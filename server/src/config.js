@@ -55,11 +55,33 @@ const schema = z.object({
   // Either can be left empty: that part of the studio says it is not connected.
   ANTHROPIC_API_KEY: optional(z.string().min(20)),
   STUDIO_COPY_MODEL: z.string().default("claude-opus-5-5"),
+  // The WhatsApp stylist, on the same Anthropic key.
+  STYLIST_MODEL: z.string().default("claude-opus-5-5"),
   PHOTOROOM_API_KEY: optional(z.string().min(10)),
   PHOTOROOM_API_BASE: z.url().default("https://image-api.photoroom.com"),
   // Development and tests only: a local stand-in that returns the photo as it is and a template
   // write-up, so the studio can be tried without either account. Refused in production.
   STUDIO_STAND_IN: z.preprocess((value) => value === "true" || value === true, z.boolean()).default(false),
+  // Development and tests only: website sign-in codes are returned to the page instead of sent on
+  // WhatsApp when no template is set. Refused in production.
+  SHOP_CODE_STAND_IN: z.preprocess((value) => value === "true" || value === true, z.boolean()).default(false),
+  // Development and tests only: a rule-based stand-in for the WhatsApp stylist. Refused in production.
+  STYLIST_STAND_IN: z.preprocess((value) => value === "true" || value === true, z.boolean()).default(false),
+
+  // Meta ads, on the brand's own Business Manager: the pixel (dataset) that receives purchases through
+  // the Conversions API, the ad account the Ads page reads, and a system-user token with ads_read and
+  // ads_management. META_TEST_EVENT_CODE sends events to Events Manager's test tab only.
+  META_PIXEL_ID: optional(z.string().regex(/^\d+$/, "META_PIXEL_ID is Meta's numeric id")),
+  META_AD_ACCOUNT_ID: optional(z.string().regex(/^\d+$/, "META_AD_ACCOUNT_ID: the number, without act_")),
+  META_ADS_TOKEN: optional(z.string().min(20)),
+  META_TEST_EVENT_CODE: optional(z.string().max(40)),
+
+  // Instagram messages and comments, on the brand's professional account (Instagram API with Instagram
+  // Login). The webhook is signed with the app secret (the WhatsApp app's when not set).
+  INSTAGRAM_ACCOUNT_ID: optional(z.string().regex(/^\d+$/, "INSTAGRAM_ACCOUNT_ID is Meta's numeric id")),
+  INSTAGRAM_ACCESS_TOKEN: optional(z.string().min(20)),
+  INSTAGRAM_APP_SECRET: optional(z.string().min(16)),
+  INSTAGRAM_GRAPH_BASE: z.url().default("https://graph.instagram.com"),
 
   // Courier booking through Shiprocket, on the brand's own Shiprocket account. Use a separate API
   // user (Shiprocket > Settings > API), not the main login. "none": tracking numbers are typed in by hand.
@@ -74,6 +96,10 @@ const schema = z.object({
   const razorpay = [value.RAZORPAY_KEY_ID, value.RAZORPAY_KEY_SECRET, value.RAZORPAY_WEBHOOK_SECRET].filter(Boolean).length;
   if (razorpay && razorpay < 3) ctx.addIssue({ code: "custom", path: ["RAZORPAY_KEY_ID"], message: "Set all three Razorpay settings, or none" });
   if (value.STUDIO_STAND_IN && value.NODE_ENV === "production") ctx.addIssue({ code: "custom", path: ["STUDIO_STAND_IN"], message: "STUDIO_STAND_IN is for development only" });
+  if (value.STYLIST_STAND_IN && value.NODE_ENV === "production") ctx.addIssue({ code: "custom", path: ["STYLIST_STAND_IN"], message: "STYLIST_STAND_IN is for development only" });
+  if ((value.META_PIXEL_ID || value.META_AD_ACCOUNT_ID) && !value.META_ADS_TOKEN) ctx.addIssue({ code: "custom", path: ["META_ADS_TOKEN"], message: "META_ADS_TOKEN is needed for META_PIXEL_ID / META_AD_ACCOUNT_ID" });
+  if (Boolean(value.INSTAGRAM_ACCOUNT_ID) !== Boolean(value.INSTAGRAM_ACCESS_TOKEN)) ctx.addIssue({ code: "custom", path: ["INSTAGRAM_ACCOUNT_ID"], message: "Set INSTAGRAM_ACCOUNT_ID and INSTAGRAM_ACCESS_TOKEN together" });
+  if (value.SHOP_CODE_STAND_IN && value.NODE_ENV === "production") ctx.addIssue({ code: "custom", path: ["SHOP_CODE_STAND_IN"], message: "SHOP_CODE_STAND_IN is for development only" });
   if (value.SHIPPING_PROVIDER === "shiprocket") {
     for (const name of ["SHIPROCKET_EMAIL", "SHIPROCKET_PASSWORD", "SHIPROCKET_WEBHOOK_TOKEN"]) {
       if (!value[name]) ctx.addIssue({ code: "custom", path: [name], message: `${name} is required for SHIPPING_PROVIDER=shiprocket` });

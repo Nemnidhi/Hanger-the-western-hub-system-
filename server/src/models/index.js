@@ -14,3 +14,10 @@ export { Location, Supplier, Style, Sku, StockLevel, StockMove } from "./Catalog
 export { Order, ORDER_STATUSES, OPEN_STATUSES, orderLabel } from "./Order.js";
 export { Invoice } from "./Invoice.js";
 export { StudioJob, STUDIO_KINDS } from "./Studio.js";
+export { Broadcast } from "./Broadcast.js";
+export { Return, RETURN_REASONS, REFUND_METHODS } from "./Return.js";
+export { PointsEntry, Creator, CreatorPayout } from "./Loyalty.js";
+export { PurchaseOrder, Markdown } from "./Buying.js";
+export { Transfer } from "./Transfer.js";
+export { LoginCode, CustomerSession } from "./Shop.js";
+export { InstagramThread, InstagramMessage, InstagramComment } from "./Instagram.js";

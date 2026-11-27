@@ -15,9 +15,19 @@ import { createRealtimeHub } from "./realtime/hub.js";
 import { createCommerceRouter } from "./routes/commerce.js";
 import { createPicksRouter } from "./routes/picks.js";
 import { createStudioRouter } from "./routes/studio.js";
+import { createReportsRouter } from "./routes/reports.js";
+import { createBroadcastsRouter } from "./routes/broadcasts.js";
+import { createReturnsRouter } from "./routes/returns.js";
+import { createCustomersRouter } from "./routes/customers.js";
+import { createBuyingRouter } from "./routes/buying.js";
+import { createBriefRouter } from "./routes/brief.js";
 import { createUploadsRouter } from "./routes/uploads.js";
 import { createRazorpayWebhookRouter } from "./payments/handlers.js";
 import { createCourierWebhookRouter } from "./shipping/courier.js";
+import { createShopRouter, createFeedRouter } from "./routes/shop.js";
+import { createAdsRouter } from "./routes/ads.js";
+import { createInstagramRouter } from "./routes/instagram.js";
+import { createInstagramWebhookRouter } from "./instagram/instagram.js";
 
 // Jobs waiting longer than this mean the worker is down or stuck: the readiness check fails so the
 // uptime monitor alerts someone.
@@ -52,6 +62,7 @@ export function createApp({ config, logger, fetchImpl, services = createServices
 
   // The webhook reads its own raw body (signature check), so it is mounted before the JSON parser.
   app.use(createWebhookRouter({ config, logger }));
+  app.use(createInstagramWebhookRouter({ config, logger }));
   app.use(createRazorpayWebhookRouter({ config, logger }));
   app.use(createCourierWebhookRouter({ config, logger }));
 
@@ -74,6 +85,18 @@ export function createApp({ config, logger, fetchImpl, services = createServices
   app.use(createCommerceRouter({ config, services }));
   app.use(createPicksRouter({ config }));
   app.use(createStudioRouter({ config, services }));
+  app.use(createReportsRouter({ config }));
+  app.use(createBroadcastsRouter({ config }));
+  app.use(createReturnsRouter({ config }));
+  app.use(createCustomersRouter({ config }));
+  app.use(createBuyingRouter({ config }));
+  app.use(createBriefRouter({ config }));
+  app.use(createShopRouter({ config, services }));
+  app.use(createAdsRouter({ config, services }));
+  app.use(createInstagramRouter({ config }));
+
+  // The Google Merchant Center product feed (public, outside /api).
+  app.use(createFeedRouter({ config }));
 
   // The built staff app, with every non-API path answered by index.html (client-side pages).
   const webDir = config.WEB_DIST_DIR ? path.resolve(config.WEB_DIST_DIR) : "";
@@ -81,7 +104,7 @@ export function createApp({ config, logger, fetchImpl, services = createServices
     app.use(express.static(webDir, { index: false, maxAge: "1h", setHeaders: (res, file) => {
       if (file.includes(`${path.sep}assets${path.sep}`)) res.set("Cache-Control", "public, max-age=31536000, immutable");
     } }));
-    app.get(/^(?!\/api\/|\/webhooks\/).*/, (req, res) => {
+    app.get(/^(?!\/api\/|\/webhooks\/|\/feeds\/).*/, (req, res) => {
       res.set("Cache-Control", "no-cache");
       res.sendFile(path.join(webDir, "index.html"));
     });

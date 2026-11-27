@@ -46,6 +46,7 @@ export interface Style {
   imageAlt?: string;
   social?: { instagramCaption: string; hashtags: string[] };
   sizes: SizeRow[];
+  markdown?: { kind: "" | "public" | "quiet"; listPaise: number; memberPaise: number; pct: number; until: string | null };
 }
 
 export interface Location {
@@ -55,6 +56,8 @@ export interface Location {
   kind: "store" | "warehouse";
   address: string;
   pincode: string;
+  city?: string;
+  gstin?: string;
   invoicePrefix: string;
   active: boolean;
 }
@@ -76,6 +79,7 @@ export interface OrderLine {
   unitPaise: number;
   gstRate: number;
   hsn: string;
+  returnedQty?: number;
 }
 
 export type OrderStatus = "draft" | "awaiting_payment" | "awaiting_confirmation" | "confirmed" | "packed" | "shipped" | "delivered" | "rto" | "returned" | "cancelled";
@@ -167,6 +171,14 @@ export interface Settings {
   shipping: { pickupLocation: string; weightGrams: number; lengthCm: number; breadthCm: number; heightCm: number };
   picks?: PickSettings;
   studio?: { backdrop: string; voice: string; hashtags: string[] };
+  broadcasts?: { minGapDays: number; dailyLimit: number; sendFromHour: number; sendUntilHour: number };
+  eway?: { thresholdPaise: number; defaultDistanceKm: number };
+  stylist?: { enabled: boolean; dailyLimit: number; pauseMinutes: number; handoffHours: number; notes: string };
+  ads?: { sendPurchases: boolean; channels: string[] };
+  instagram?: { commentReplies: boolean; rules: { keyword: string; reply: string; publicReply: string }[] };
+  brief?: { enabled: boolean; hour: number; minute: number; phones: string[]; template: { name: string; language: string } };
+  buying?: { coverDays: number; leadDays: number; minMarkupPct: number; trialDays: number; calendar: { name: string; date: string; yearly: boolean; buyWeeksBefore: number; categories: string[]; note: string }[] };
+  loyalty?: { enabled: boolean; rupeesPerPoint: number; pointValuePaise: number; maxRedeemPct: number; minRedeemPoints: number; referrerPoints: number; referralDiscountPct: number; tiers: { name: string; minSpendPaise: number; multiplier: number; perk: string }[] };
   tags?: { brandLine: string; qrUrl: string; footer: string; showName: boolean; widthMm: number; heightMm: number };
 }
 

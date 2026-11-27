@@ -8,6 +8,8 @@ import { codBand, codRiskScore } from "./codRisk.js";
 import { commitStock, holdStock, releaseStock, restock } from "./stock.js";
 import { issueInvoice } from "./invoices.js";
 import * as say from "./messages.js";
+import { applyDiscount, contactForPhone, earnPoints, quoteDiscount, redeemPoints } from "./loyalty.js";
+import { memberPrices } from "./buying.js";
 
 // The life of an order. Every function runs inside the caller's transaction (`session`), so the
 // order, its stock, its invoice, its customer message and its follow-up jobs change together or not at all.
@@ -90,7 +92,7 @@ export async function onlineLocation({ tenantId, settings, session }) {
   return location;
 }
 
-async function scheduleExpiry(order, session) {
+export async function scheduleExpiry(order, session) {
   await enqueue("order.holdExpiry", { orderId: String(order._id), holdUntil: order.holdUntil.toISOString() }, { session, runAt: order.holdUntil });
 }
 
@@ -110,6 +112,8 @@ export async function placeOnlineOrder({ tenantId, channel, contact, conversatio
     locationId: location._id,
     lines,
     totals: totalsOf(lines),
+    // She tapped a Click-to-WhatsApp ad in the last 7 days: the sale is that ad's.
+    attribution: adAttribution(contact, now),
     status: "draft",
     chatStep: "awaiting_address",
     stockState: "held",
@@ -121,6 +125,12 @@ export async function placeOnlineOrder({ tenantId, channel, contact, conversatio
   await tellCustomer({ tenantId, order, content: saved ? say.askSavedAddress(order, settings.orderPrefix, saved) : say.askAddress(order, settings.orderPrefix), settings, session, now });
   await order.save({ session });
   return order;
+}
+
+function adAttribution(contact, now) {
+  const referral = contact?.adReferral;
+  if (!referral?.at || now - new Date(referral.at) > 7 * 24 * 60 * 60 * 1000 || !(referral.sourceId || referral.ctwaClid)) return undefined;
+  return { source: "meta", medium: "whatsapp ad", campaign: referral.headline || "", adId: referral.sourceType === "ad" || !referral.sourceType ? referral.sourceId : "", ctwaClid: referral.ctwaClid, landedAt: referral.at };
 }
 
 /** Records the delivery address (typed in chat or the saved one) and asks how to pay. */
@@ -232,6 +242,8 @@ export async function confirmOrder({ tenantId, order, by, session, now = new Dat
   }
   await tellCustomer({ tenantId, order, content: say.confirmed(order, settings.orderPrefix), settings, session, now });
   await order.save({ session });
+  // The sale to Meta's Conversions API (nothing happens there unless a pixel is set on the server).
+  await enqueue("meta.purchase", { orderId: String(order._id) }, { session, dedupeKey: `capi:${order._id}`, runAt: new Date(now.getTime() + 60_000) });
   return order;
 }
 
@@ -327,6 +339,7 @@ export async function markDelivered({ tenantId, order, by, session, now = new Da
   order.history.push(historyEntry(by, "delivered", "", now));
   await tellCustomer({ tenantId, order, content: say.delivered(order, settings.orderPrefix), settings, session, now });
   await order.save({ session });
+  await earnPoints({ tenantId, order, settings, session, now });
   return order;
 }
 
@@ -344,44 +357,63 @@ export async function markRto({ tenantId, order, by, note = "", session, now = n
   return order;
 }
 
-/** The customer sent a delivered order back. The refund itself is made in the payment gateway. */
+/**
+ * The customer sent the whole of a delivered order back (every piece not already returned). `reason`
+ * is a reason code (too_small, quality...) or the staff's own words. Pieces can also come back one by
+ * one with returnPieces (returns.js). The refund itself is made in the payment gateway or at the till.
+ */
 export async function markReturned({ tenantId, order, by, reason, session, now = new Date() }) {
   if (order.status !== "delivered") throw httpError(409, "Only a delivered order can be returned.", "NOT_DELIVERED");
-  if (!String(reason || "").trim()) throw httpError(400, "Say why it came back (too small, too big, looks different, quality...).", "REASON_REQUIRED");
-  const settings = await getSettings(tenantId, session);
-  await restock({ tenantId, locationId: order.locationId, lines: order.lines, orderId: order._id, kind: "return", by: who(by), note: reason, session, at: now });
-  order.status = "returned";
-  order.stockState = "released";
-  order.creditNoteId = (await issueInvoice({ tenantId, order, settings, kind: "credit_note", session, at: now }))?._id || null;
-  order.history.push(historyEntry(by, "returned", reason, now));
-  await order.save({ session });
-  return order;
+  const text = String(reason || "").trim();
+  if (!text) throw httpError(400, "Say why it came back (too small, too big, looks different, quality...).", "REASON_REQUIRED");
+  const { returnPieces } = await import("./returns.js");
+  const { RETURN_REASONS } = await import("../models/index.js");
+  const code = RETURN_REASONS.includes(text) ? text : "other";
+  const items = order.lines.filter((line) => line.qty > (line.returnedQty || 0)).map((line) => ({ skuCode: line.skuCode, qty: line.qty - (line.returnedQty || 0), reason: code }));
+  const { order: saved } = await returnPieces({ tenantId, order, items, note: code === "other" ? text : "", by, session, now });
+  return saved;
 }
 
-/** A sale at the store counter: priced, taken off the shelf and invoiced in one step. */
-export async function storeSale({ tenantId, locationId, items, method, customer = {}, by, session, now = new Date() }) {
+/**
+ * A sale at the store counter: priced, taken off the shelf and invoiced in one step. With her phone
+ * the bill joins her customer record (points, tier); `code` is a creator's or a friend's code and
+ * `redeem` the points she pays with.
+ */
+export async function storeSale({ tenantId, locationId, items, method, customer = {}, code = "", redeem = 0, by, session, now = new Date() }) {
   if (!["store_cash", "store_upi", "store_card"].includes(method)) throw httpError(400, "Payment must be store_cash, store_upi or store_card", "BAD_METHOD");
   const settings = await getSettings(tenantId, session);
   const location = await Location.findOne({ _id: locationId, tenantId, active: true }).session(session);
   if (!location) throw httpError(404, "Location not found", "NO_LOCATION");
   const lines = await priceLines({ tenantId, items, settings, session });
+  const contact = customer.phone ? await contactForPhone({ tenantId, phone: customer.phone, name: customer.name, session }) : null;
+  // A member (phone on the bill) pays the quiet markdown price on those styles.
+  if (contact) await memberPrices({ tenantId, lines, settings, session, now });
+  const gross = lines.reduce((sum, line) => sum + line.unitPaise * line.qty, 0);
+  const quote = code || redeem ? await quoteDiscount({ tenantId, settings, contact, code, redeemPoints: redeem, grossPaise: gross, session }) : null;
+  if (quote) applyDiscount(lines, quote.totalPaise, settings);
   await holdStock({ tenantId, locationId: location._id, lines, session });
   const order = new Order({
     tenantId,
     number: await nextNumber(`order:${tenantId}`, session),
     channel: "store",
+    contactId: contact?._id || null,
     customer: { name: String(customer.name || "").slice(0, 80), phone: String(customer.phone || "").replace(/\D/g, "").slice(0, 15) },
     locationId: location._id,
     lines,
     totals: totalsOf(lines),
+    discount: quote
+      ? { code: quote.code?.code || "", kind: quote.code?.kind || "", creatorId: quote.code?.creatorId || null, referrerId: quote.code?.referrerId || null, codePaise: quote.code?.paise || 0, pointsUsed: quote.points.used, pointsPaise: quote.points.paise }
+      : undefined,
     payment: { method, status: "paid", paidAt: now },
     status: "awaiting_payment",
     stockState: "held",
     history: [historyEntry(by, "store_sale", location.code, now)],
   });
+  if (quote?.points.used) await redeemPoints({ tenantId, contact, order, points: quote.points.used, by: who(by), session, now });
   await confirmOrder({ tenantId, order, by, session, now });
   order.status = "delivered";
   order.shipment.deliveredAt = now;
   await order.save({ session });
+  await earnPoints({ tenantId, order, settings, session, now });
   return order;
 }

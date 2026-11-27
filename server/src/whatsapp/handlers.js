@@ -23,11 +23,12 @@ export function createWhatsAppHandlers({ config, client, now = () => new Date(),
 
   async function storeInbound(event) {
     const { message, contact: metaContact } = event.payload;
-    const inbound = readInboundMessage(message);
+    const { referral, ...inbound } = readInboundMessage(message);
     try {
       return await withTransaction(async (session) => {
         const contactUpdate = { $setOnInsert: { firstSeenAt: inbound.at }, $max: { lastInboundAt: inbound.at } };
         if (metaContact?.profile?.name) contactUpdate.$set = { profileName: String(metaContact.profile.name).slice(0, 120) };
+        if (referral) contactUpdate.$set = { ...contactUpdate.$set, adReferral: { ...referral, at: inbound.at } };
         const contact = await Contact.findOneAndUpdate({ tenantId, waId: String(message.from) }, contactUpdate, { upsert: true, new: true, session });
         const conversation = await Conversation.findOneAndUpdate(
           { tenantId, contactId: contact._id },

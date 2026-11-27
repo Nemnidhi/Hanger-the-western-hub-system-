@@ -6,3 +6,6 @@ node_modules/
 *.log
 coverage/
 dist/
+.next/
+next-env.d.ts
+*.tsbuildinfo

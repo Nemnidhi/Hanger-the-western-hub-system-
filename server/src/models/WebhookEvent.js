@@ -7,7 +7,7 @@ const webhookEventSchema = new mongoose.Schema(
   {
     ...tenantField,
     key: { type: String, required: true },
-    kind: { type: String, enum: ["message", "status", "other"], required: true },
+    kind: { type: String, enum: ["message", "status", "other", "instagram"], required: true },
     field: { type: String, default: "" },
     payload: { type: mongoose.Schema.Types.Mixed, required: true },
     receivedAt: { type: Date, default: () => new Date() },
