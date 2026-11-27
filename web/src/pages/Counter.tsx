@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { codeHas, sameCode } from "../codes";
 import { api } from "../api";
 import { rupees } from "../format";
 import { Notice, useLoad, useRun } from "../ui";
@@ -58,7 +59,7 @@ export function Counter() {
   }, [styles.data, location]);
 
   const term = scan.trim().toUpperCase();
-  const matches = term.length >= 2 ? sizes.filter((row) => row.code.includes(term) || row.barcode.toUpperCase() === term || row.name.toUpperCase().includes(term)).slice(0, 12) : [];
+  const matches = term.length >= 2 ? sizes.filter((row) => codeHas(row.code, term) || sameCode(term, row.code, row.barcode) || row.name.toUpperCase().includes(term)).slice(0, 12) : [];
 
   function add(code: string) {
     const row = sizes.find((item) => item.code === code);
@@ -83,7 +84,7 @@ export function Counter() {
     if (event.key !== "Enter") return;
     event.preventDefault();
     // A scanner types the barcode and presses Enter: an exact barcode or size code is added at once.
-    const exact = sizes.find((row) => row.barcode.toUpperCase() === term || row.code === term);
+    const exact = sizes.find((row) => sameCode(term, row.code, row.barcode));
     if (exact) add(exact.code);
     else if (matches.length === 1) add(matches[0].code);
     else if (!matches.length) setMessage(`Nothing matches "${scan.trim()}".`);

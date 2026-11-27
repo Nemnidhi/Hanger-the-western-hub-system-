@@ -37,6 +37,13 @@ commerce catalogue) used directly as tech partner. No Shopify. Phase 1: the serv
   which she can put in a cart. Outside it: the owner's approved picks template, else a clear refusal.
   Automatic picks after a website look (delay and a once-in-N-days gap) are built and off by default;
   they start working when the website storefront calls `schedulePicksFollowUp` (not built yet).
+- **Price tags and codes**: a new style's code is its category and the next number (DRS-015 is the
+  15th dress, TOP-041, JNS-031...); each size is STYLE-SIZE (DRS-015-M). Tags for the label printer
+  (2 x 1 inch by default) show the brand, name, MRP incl. of all taxes, size, a Code 128 barcode of
+  the size code and the code in large type; the counter, stock and trial-room boxes take the code
+  scanned or typed by hand, with or without dashes ("drs015m"). Print from Catalogue (Price tags on a
+  style) or straight after receiving a delivery: from a computer with the printer on USB, or as
+  pictures for the 4Barcode phone app (Pictures Printing). An optional QR link and footer line.
 - **Photo studio**: staff photograph a new piece (a hanger or a flat surface is fine, up to 4 angles;
   the phone shrinks them before upload). Photoroom, on the brand's own account, makes a clean white
   photo and one on the brand's backdrop colour, and on request an AI "on a model" or ghost-mannequin
@@ -75,7 +82,8 @@ React + Vite, served by the API in production (`WEB_DIST_DIR`). Screens by role:
 - **Invoice**: printable GST invoice / credit note (A4 or 80 mm counter printer), amount in words.
 - **Settings** (owner): business and GST details, COD bands, shipping (Shiprocket pickup address,
   usual parcel weight and box), outfit picks (weights, new / slow days, picks template, automatic
-  picks), photo studio (backdrop colour, voice, shop hashtags), locations, suppliers. Plus Templates,
+  picks), photo studio (backdrop colour, voice, shop hashtags), price tags (brand line, QR link,
+  label size, with a preview), locations, suppliers. Plus Templates,
   Team and My account.
 
 ## Not yet
@@ -118,6 +126,7 @@ All under `/api`, signed-in, with the `x-hanger-app: 1` header on changes.
 |---|---|
 | `GET/POST /locations`, `GET/POST /suppliers` | set-up |
 | `GET/POST /styles`, `PATCH /styles/:id`, `PATCH /skus/:code` | catalogue (barcode on a size) |
+| `GET /styles/next-code?category=` | the next style code in a category (DRS-015) |
 | `POST /stock/receive`, `/stock/count`, `/stock/transfer`, `GET /stock/moves` | stock |
 | `GET /orders`, `GET /orders/:id` | orders with their invoices |
 | `POST /orders/:id/{confirm,cancel,payment-choice,state,pack,ship,deliver,rto,return}` | order steps |

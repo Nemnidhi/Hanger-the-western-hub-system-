@@ -70,6 +70,17 @@ const settingsSchema = new mongoose.Schema(
       voice: { type: String, default: "", maxlength: 600 },
       hashtags: { type: [String], default: ["TheHangerIndore", "IndoreFashion", "WesternWear"] },
     },
+    // Price tags for the label printer: the brand line at the top, an optional link for the QR code
+    // ("{code}" is replaced by the size code), a short line under the QR (the website, say), and the
+    // label size in millimetres (the 4Barcode rolls are 2 x 1 inch).
+    tags: {
+      brandLine: { type: String, default: "", maxlength: 30 },
+      qrUrl: { type: String, default: "", maxlength: 200 },
+      footer: { type: String, default: "", maxlength: 30 },
+      showName: { type: Boolean, default: true },
+      widthMm: { type: Number, default: 50.8, min: 25, max: 110 },
+      heightMm: { type: Number, default: 25.4, min: 15, max: 80 },
+    },
     // Approved Utility template for order updates outside WhatsApp's 24-hour window
     // (blanks: first name, order number, status words).
     templates: {

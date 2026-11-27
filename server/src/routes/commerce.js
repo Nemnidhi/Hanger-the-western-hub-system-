@@ -7,6 +7,7 @@ import { withTransaction, isDuplicateKeyError } from "../db.js";
 import { audit } from "../audit.js";
 import { httpError, parseBody, route } from "./validate.js";
 import { addSizes, createStyle, updateStyle } from "../commerce/catalog.js";
+import { nextStyleCode } from "../commerce/codes.js";
 import { adjustStock, receiveStock, transferStock } from "../commerce/stock.js";
 import { GST_STATES } from "../commerce/pincode.js";
 import * as orders from "../commerce/orders.js";
@@ -122,6 +123,12 @@ export function createCommerceRouter({ config, services }) {
         })),
       })),
     });
+  }));
+
+  // The next style code for a category (DRS-015), offered when a style is added.
+  router.get("/api/styles/next-code", requireAuth(), requirePermission("catalog:read"), route(async (req, res) => {
+    const category = z.string().trim().min(2).max(40).parse(String(req.query.category || "other"));
+    res.json({ code: await nextStyleCode({ tenantId, category }) });
   }));
 
   router.post("/api/styles", requireAuth(), requirePermission("catalog:write"), route(async (req, res) => {
@@ -378,6 +385,16 @@ export function createCommerceRouter({ config, services }) {
             backdrop: z.string().regex(/^#?[0-9A-Fa-f]{6}$/).transform((value) => value.replace("#", "").toUpperCase()).optional(),
             voice: z.string().max(600).optional(),
             hashtags: z.array(z.string().trim().regex(/^#?[\p{L}\p{N}_]{1,60}$/u, "a hashtag without spaces").transform((value) => value.replace(/^#/, ""))).max(10).optional(),
+          })
+          .optional(),
+        tags: z
+          .object({
+            brandLine: z.string().trim().max(30).optional(),
+            qrUrl: z.union([z.literal(""), z.url({ protocol: /^https?$/ }).max(200)]).optional(),
+            footer: z.string().trim().max(30).optional(),
+            showName: z.boolean().optional(),
+            widthMm: z.number().min(25).max(110).optional(),
+            heightMm: z.number().min(15).max(80).optional(),
           })
           .optional(),
         templates: z.object({ orderUpdate: z.object({ name: z.string().max(512), language: z.string().max(10).default("en") }).optional() }).optional(),

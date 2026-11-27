@@ -1,8 +1,10 @@
 import { useMemo, useRef, useState } from "react";
+import { codeHas, sameCode } from "../codes";
 import { api, can, type Me } from "../api";
 import { when } from "../format";
 import { Notice, useLoad, useRun } from "../ui";
 import type { Location, Style, Supplier } from "../types";
+import { TagDialog } from "./Tags";
 
 // Stock in and around the boutique: receive a supplier's delivery, count a size, move pieces
 // between locations, and the record of every change.
@@ -29,7 +31,7 @@ export function Stock({ me }: { me: Me }) {
   const suppliers = useLoad<{ suppliers: Supplier[] }>("/api/suppliers");
   const locs = (locations.data?.locations || []).filter((location) => location.active);
   const sizes = useMemo(
-    () => (styles.data?.styles || []).flatMap((style) => style.sizes.map((size) => ({ code: size.code, barcode: size.barcode, name: style.name, size: size.size, stock: size.stock }))),
+    () => (styles.data?.styles || []).flatMap((style) => style.sizes.map((size) => ({ code: size.code, barcode: size.barcode, name: style.name, size: size.size, pricePaise: size.pricePaise, stock: size.stock }))),
     [styles.data],
   );
   const tabs: { id: Tab; label: string; show: boolean }[] = [
@@ -65,13 +67,13 @@ export function Stock({ me }: { me: Me }) {
   );
 }
 
-type SizeOption = { code: string; barcode: string; name: string; size: string; stock: { locationId: string; onHand: number; available: number }[] };
+type SizeOption = { code: string; barcode: string; name: string; size: string; pricePaise: number; stock: { locationId: string; onHand: number; available: number }[] };
 
 /** A box that takes a scanned barcode, a size code, or a few letters of the name. */
 function SizePicker({ sizes, onPick, autoFocus = false }: { sizes: SizeOption[]; onPick: (code: string) => void; autoFocus?: boolean }) {
   const [text, setText] = useState("");
   const term = text.trim().toUpperCase();
-  const matches = term.length >= 2 ? sizes.filter((row) => row.code.includes(term) || row.barcode.toUpperCase() === term || row.name.toUpperCase().includes(term)).slice(0, 8) : [];
+  const matches = term.length >= 2 ? sizes.filter((row) => codeHas(row.code, term) || sameCode(term, row.code, row.barcode) || row.name.toUpperCase().includes(term)).slice(0, 8) : [];
   const pick = (code: string) => {
     onPick(code);
     setText("");
@@ -88,7 +90,7 @@ function SizePicker({ sizes, onPick, autoFocus = false }: { sizes: SizeOption[];
         onKeyDown={(event) => {
           if (event.key !== "Enter") return;
           event.preventDefault();
-          const exact = sizes.find((row) => row.barcode.toUpperCase() === term || row.code === term);
+          const exact = sizes.find((row) => sameCode(term, row.code, row.barcode));
           if (exact) pick(exact.code);
           else if (matches.length === 1) pick(matches[0].code);
         }}
@@ -114,6 +116,9 @@ function ItemsForm({ mode, sizes, locs, suppliers, onDone }: { mode: "receive" |
   const [supplierId, setSupplierId] = useState("");
   const [note, setNote] = useState("");
   const [done, setDone] = useState("");
+  // The delivery just received, for its price tags.
+  const [received, setReceived] = useState<{ code: string; qty: number }[]>([]);
+  const [tagging, setTagging] = useState(false);
   const add = (code: string) => setLines((current) => (current.some((line) => line.code === code) ? current.map((line) => (line.code === code ? { ...line, qty: line.qty + 1 } : line)) : [...current, { code, qty: 1 }]));
   const pieces = lines.reduce((sum, line) => sum + line.qty, 0);
   const fromLoc = locs.find((location) => location.code === from);
@@ -124,6 +129,7 @@ function ItemsForm({ mode, sizes, locs, suppliers, onDone }: { mode: "receive" |
       if (mode === "receive") await api("/api/stock/receive", { method: "POST", body: { location: to, items, note, ...(supplierId ? { supplierId } : {}) } });
       else await api("/api/stock/transfer", { method: "POST", body: { from, to, items, note } });
       setDone(`${mode === "receive" ? "Received" : "Moved"} ${pieces} piece${pieces > 1 ? "s" : ""}.`);
+      if (mode === "receive") setReceived(items.map((item) => ({ code: item.skuCode, qty: item.qty })));
       setLines([]);
       setNote("");
       onDone();
@@ -201,6 +207,23 @@ function ItemsForm({ mode, sizes, locs, suppliers, onDone }: { mode: "receive" |
       )}
       <Notice>{error}</Notice>
       <Notice tone="ok">{done}</Notice>
+      {mode === "receive" && received.length > 0 && (
+        <div className="row-actions">
+          <button className="btn" onClick={() => setTagging(true)}>
+            Print tags for these {received.reduce((sum, line) => sum + line.qty, 0)} pieces
+          </button>
+        </div>
+      )}
+      {tagging && (
+        <TagDialog
+          title="Price tags for this delivery"
+          lines={received.flatMap((line) => {
+            const row = sizes.find((item) => item.code === line.code);
+            return row ? [{ item: { code: row.code, name: row.name, size: row.size, pricePaise: row.pricePaise }, qty: line.qty }] : [];
+          })}
+          onClose={() => setTagging(false)}
+        />
+      )}
       <div className="row-actions">
         <button className="btn primary" disabled={busy || !pieces || (mode === "transfer" && from === to)} onClick={submit}>
           {mode === "receive" ? `Receive ${pieces || ""} piece${pieces === 1 ? "" : "s"}` : `Move ${pieces || ""} piece${pieces === 1 ? "" : "s"}`}

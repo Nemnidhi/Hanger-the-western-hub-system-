@@ -167,6 +167,7 @@ export interface Settings {
   shipping: { pickupLocation: string; weightGrams: number; lengthCm: number; breadthCm: number; heightCm: number };
   picks?: PickSettings;
   studio?: { backdrop: string; voice: string; hashtags: string[] };
+  tags?: { brandLine: string; qrUrl: string; footer: string; showName: boolean; widthMm: number; heightMm: number };
 }
 
 export type PickPart = "size" | "pair" | "colour" | "occasion" | "taste" | "push";

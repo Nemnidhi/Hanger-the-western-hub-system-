@@ -266,3 +266,11 @@ a.btn { text-decoration: none; }
 .colour-pick { display: flex; gap: 8px; align-items: center; }
 .colour-pick input { width: 44px; height: 34px; border: 1px solid var(--border); border-radius: 6px; padding: 2px; background: var(--surface); }
 @media (max-width: 640px) { .studio .form-grid { grid-template-columns: 1fr; } .studio .form-grid .span-2 { grid-column: auto; } }
+
+/* Price tags */
+.tag-preview { display: inline-block; max-width: 100%; border: 1px dashed var(--border); border-radius: 6px; background: #fff; padding: 6px; margin-bottom: 10px; }
+.tag-preview svg { display: block; width: min(100%, 320px); height: auto; }
+.tag-button { margin-top: 6px; }
+.tag-lines td { vertical-align: middle; }
+.tag-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-top: 8px; }
+.tag-actions > div { display: grid; gap: 6px; align-content: start; }

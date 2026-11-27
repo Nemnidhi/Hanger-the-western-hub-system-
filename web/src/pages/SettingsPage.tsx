@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { DEFAULT_LOOK, TAG_SIZES, type TagLook } from "../tags";
+import { TagPreview } from "./Tags";
 import { api, can, type Me } from "../api";
 import { Notice, toPaise, useLoad, useRun } from "../ui";
 import type { Location, PickPart, PickSettings, Settings, Supplier } from "../types";
@@ -16,6 +18,7 @@ export function SettingsPage({ me }: { me: Me }) {
       {loaded.data && <ShippingForm settings={loaded.data.settings} courierReady={loaded.data.courierReady} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <PicksForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       {loaded.data && <StudioForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
+      {loaded.data && <TagsForm settings={loaded.data.settings} canWrite={canWrite} onSaved={loaded.reload} />}
       <Locations canWrite={canWrite} onlineCode={loaded.data?.settings.onlineLocationCode || ""} list={locations} />
       <Suppliers canWrite={can(me, "catalog:write")} />
     </div>
@@ -363,6 +366,72 @@ function StudioForm({ settings, canWrite, onSaved }: { settings: Settings; canWr
       {canWrite && (
         <button className="btn primary" disabled={busy}>
           Save photo studio
+        </button>
+      )}
+    </form>
+  );
+}
+
+/** Price tags: what the label printer prints on each piece, with a preview. */
+function TagsForm({ settings, canWrite, onSaved }: { settings: Settings; canWrite: boolean; onSaved: () => void }) {
+  const initial = () => ({ ...DEFAULT_LOOK, ...(settings.tags || {}) });
+  const [form, setForm] = useState<TagLook>(initial);
+  useEffect(() => setForm(initial()), [settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  const { busy, error, run } = useRun();
+  const [saved, setSaved] = useState("");
+  const preset = TAG_SIZES.findIndex((size) => size.widthMm === form.widthMm && size.heightMm === form.heightMm);
+  const sample = { code: "DRS-015-M", name: "Linen midi dress", size: "M", pricePaise: 249900 };
+  const save = () =>
+    run(async () => {
+      await api("/api/settings", { method: "PATCH", body: { tags: { ...form, brandLine: form.brandLine.trim(), qrUrl: form.qrUrl.trim(), footer: form.footer.trim() } } });
+      setSaved("Saved.");
+      onSaved();
+    });
+  return (
+    <form className="card form-card" onSubmit={(event) => (event.preventDefault(), save())}>
+      <h2>Price tags</h2>
+      <p className="muted small-text">
+        Printed from Catalogue (Price tags on a style) or after receiving stock. Every tag has the size code as a barcode and in large type, so staff can type it when the scanner can't read it.
+      </p>
+      <TagPreview item={sample} look={form} brandName={settings.brandName} />
+      <fieldset disabled={!canWrite}>
+        <div className="form-grid">
+          <div className="field">
+            <label htmlFor="tag-brand">Brand line</label>
+            <input id="tag-brand" className="input" maxLength={30} value={form.brandLine} onChange={(event) => setForm({ ...form, brandLine: event.target.value })} placeholder={settings.brandName} />
+          </div>
+          <div className="field">
+            <label htmlFor="tag-size">Label size</label>
+            <select id="tag-size" className="input" value={preset} onChange={(event) => {
+                const picked = TAG_SIZES[Number(event.target.value)];
+                if (picked) setForm({ ...form, widthMm: picked.widthMm, heightMm: picked.heightMm });
+              }}>
+              {preset < 0 && <option value={-1}>{form.widthMm} x {form.heightMm} mm</option>}
+              {TAG_SIZES.map((size, index) => (
+                <option key={size.label} value={index}>
+                  {size.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label htmlFor="tag-footer">Line under the QR</label>
+            <input id="tag-footer" className="input" maxLength={30} value={form.footer} onChange={(event) => setForm({ ...form, footer: event.target.value })} placeholder="www.thehanger.in" />
+          </div>
+          <div className="field span-3">
+            <label htmlFor="tag-qr">QR code link (optional; {"{code}"} becomes the size code)</label>
+            <input id="tag-qr" className="input" type="url" value={form.qrUrl} onChange={(event) => setForm({ ...form, qrUrl: event.target.value })} placeholder="https://www.instagram.com/thehanger" />
+          </div>
+          <label className="check span-3">
+            <input type="checkbox" checked={form.showName} onChange={(event) => setForm({ ...form, showName: event.target.checked })} /> Show the piece's name
+          </label>
+        </div>
+      </fieldset>
+      <Notice>{error}</Notice>
+      <Notice tone="ok">{saved}</Notice>
+      {canWrite && (
+        <button className="btn primary" disabled={busy}>
+          Save price tags
         </button>
       )}
     </form>

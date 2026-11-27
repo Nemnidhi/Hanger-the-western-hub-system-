@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { codeHas, sameCode, squash } from "../codes";
 import { api, can, type Me } from "../api";
 import { rupees } from "../format";
 import { Notice, useLoad, useRun } from "../ui";
@@ -68,9 +69,9 @@ export function TrialRoom({ me }: { me: Me }) {
     }
     return rows;
   }, [styles.data]);
-  const barcodes = useMemo(() => new Map((styles.data?.styles || []).flatMap((style) => style.sizes.map((row) => [row.barcode.toUpperCase(), row.code] as const))), [styles.data]);
+  const barcodes = useMemo(() => new Map((styles.data?.styles || []).flatMap((style) => style.sizes.filter((row) => row.barcode).map((row) => [squash(row.barcode), row.code] as const))), [styles.data]);
   const term = scan.trim().toUpperCase();
-  const matches = term.length >= 2 ? sizes.filter((row) => row.code.includes(term) || row.name.toUpperCase().includes(term)).slice(0, 10) : [];
+  const matches = term.length >= 2 ? sizes.filter((row) => codeHas(row.code, term) || row.name.toUpperCase().includes(term)).slice(0, 10) : [];
 
   function add(code: string) {
     const row = sizes.find((item) => item.code === code);
@@ -84,7 +85,7 @@ export function TrialRoom({ me }: { me: Me }) {
   function onScanKey(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key !== "Enter") return;
     event.preventDefault();
-    const exact = barcodes.get(term) || sizes.find((row) => row.code === term)?.code;
+    const exact = barcodes.get(squash(term)) || sizes.find((row) => sameCode(term, row.code))?.code;
     if (exact) add(exact);
     else if (matches.length === 1) add(matches[0].code);
     else if (!matches.length) setMessage(`Nothing matches "${scan.trim()}".`);

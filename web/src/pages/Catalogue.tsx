@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api, ApiError, can, type Me } from "../api";
 import { rupees } from "../format";
 import { Dialog, Notice, toPaise, useLoad, useRun } from "../ui";
+import { TagDialog, type TagLine } from "./Tags";
 import type { Location, Style, Supplier } from "../types";
 
 // The catalogue: every style with its sizes and stock at each location. A style is a draft until it
@@ -15,6 +16,7 @@ export function Catalogue({ me }: { me: Me }) {
   const [status, setStatus] = useState<"" | "draft" | "live" | "archived">("");
   const [q, setQ] = useState("");
   const [editing, setEditing] = useState<Style | "new" | null>(null);
+  const [tagging, setTagging] = useState<Style | null>(null);
   const styles = useLoad<{ styles: Style[] }>(`/api/styles${status ? `?status=${status}` : ""}`);
   const locations = useLoad<{ locations: Location[] }>("/api/locations");
   const suppliers = useLoad<{ suppliers: Supplier[] }>("/api/suppliers");
@@ -73,6 +75,9 @@ export function Catalogue({ me }: { me: Me }) {
                   {style.code} · {style.category}
                   {style.attributes?.colour ? ` · ${style.attributes.colour}` : ""} · {total} pc
                 </div>
+                <button className="btn small tag-button" onClick={() => setTagging(style)}>
+                  Price tags
+                </button>
                 <table className="size-table">
                   <thead>
                     <tr>
@@ -107,6 +112,13 @@ export function Catalogue({ me }: { me: Me }) {
         })}
       </div>
       {styles.data && !shown.length && <div className="empty">No styles here yet.</div>}
+      {tagging && (
+        <TagDialog
+          title={`Price tags · ${tagging.code} ${tagging.name}`}
+          lines={tagging.sizes.map((size): TagLine => ({ item: { code: size.code, name: tagging.name, size: size.size, pricePaise: size.pricePaise }, qty: 1, stock: size.stock.reduce((sum, row) => sum + row.onHand, 0) }))}
+          onClose={() => setTagging(null)}
+        />
+      )}
       {editing && <StyleDialog style={editing === "new" ? null : editing} suppliers={suppliers.data?.suppliers || []} onClose={() => setEditing(null)} onSaved={() => (setEditing(null), styles.reload())} />}
     </div>
   );
@@ -146,6 +158,21 @@ function StyleDialog({ style, suppliers, onClose, onSaved }: { style: Style | nu
   }));
   const [barcodes, setBarcodes] = useState<Record<string, string>>(() => Object.fromEntries((style?.sizes || []).map((size) => [size.code, size.barcode])));
   const [uploading, setUploading] = useState(false);
+  // A new style's code follows its category (DRS-015 for the 15th dress) until staff type their own.
+  const [ownCode, setOwnCode] = useState(false);
+  useEffect(() => {
+    if (style || ownCode || form.category.trim().length < 2) return;
+    let live = true;
+    const timer = setTimeout(() => {
+      api<{ code: string }>(`/api/styles/next-code?category=${encodeURIComponent(form.category.trim())}`)
+        .then((result) => live && setForm((current) => ({ ...current, code: result.code })))
+        .catch(() => undefined);
+    }, 250);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
+  }, [style, ownCode, form.category]);
   const set = (key: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setForm({ ...form, [key]: event.target.value });
   const sizes = form.sizes.split(/[\s,]+/).map((size) => size.trim().toUpperCase()).filter(Boolean);
 
@@ -226,7 +253,8 @@ function StyleDialog({ style, suppliers, onClose, onSaved }: { style: Style | nu
           {!style && (
             <div className="field">
               <label htmlFor="code">Style code</label>
-              <input id="code" className="input" required value={form.code} onChange={set("code")} placeholder="DRS-001" pattern="[A-Za-z0-9][A-Za-z0-9\-]{2,23}" />
+              <input id="code" className="input" required value={form.code} onChange={(event) => (setOwnCode(true), set("code")(event))} placeholder="DRS-001" pattern="[A-Za-z0-9][A-Za-z0-9\-]{2,23}" />
+              <span className="muted small-text">Category + number; each size becomes {form.code || "DRS-001"}-M on its tag.</span>
             </div>
           )}
           <div className="field span-2">
